@@ -71,3 +71,5 @@ with synthdeftools.SynthDefBuilder(
     out = ugentools.ReplaceOut.ar(bus=builder['bus'], source=source)
 
 multiband_compressor = builder.build()
+
+__all__ = ['multiband_compressor']
