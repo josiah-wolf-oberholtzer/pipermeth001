@@ -12,7 +12,7 @@ with synthdeftools.SynthDefBuilder(
     ratios_below=[1., 1., 1., 1.],
     thresholds=[0.5, 0.5, 0.5, 0.5],
     ) as builder:
-    source = ugentools.Bus.ar(bus=builder['bus'])
+    source = ugentools.In.ar(bus=builder['bus'])
     band_1 = ugentools.LPF.ar(
         frequency=builder['frequencies'][0],
         source=source,
