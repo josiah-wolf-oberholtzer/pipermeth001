@@ -82,7 +82,7 @@ durations = []
 with spoopy_v0.at(0):
     group = spoopy_v0.add_group()
     for i in range(6):
-        duration = group.inscribe(pattern, duration=60)
+        duration = group.inscribe(pattern, duration=60, seed=i)
         durations.append(duration)
     compressor_synth = spoopy_v0.add_synth(
         add_action='ADD_TO_TAIL',
@@ -103,7 +103,12 @@ with spoopy_v0.at(0):
         band_3_pregain=-3,
         band_4_pregain=-3,
         )
+    limiter_synth = spoopy_v0.add_synth(
+        add_action='ADD_TO_TAIL',
+        synthdef=project_synthdefs.limiter,
+        )
+
 
 max_duration = max(durations)
-compressor_synth.set_duration(max_duration)
-group.set_duration(max_duration)
+for node in (group, compressor_synth, limiter_synth):
+    node.set_duration(max_duration)
