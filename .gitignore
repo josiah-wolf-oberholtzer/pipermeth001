@@ -42,3 +42,7 @@ nosetests.xml
 # Etc.
 .DS_Store
 .cache
+
+# Supriya
+render.aif*
+render.wav*

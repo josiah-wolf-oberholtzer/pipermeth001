@@ -6,15 +6,15 @@ from supriya import synthdefs
 from pipermeth001 import synthdefs as project_synthdefs
 
 
-session = Session(0, 2)
+spoopy_v0 = Session(0, 2)
 
 default_pattern = patterntools.Pbind(
     synthdef=synthdefs.default,
     amplitude=patterntools.Pwhite(),
-    delta=patterntools.Pwhite(0., 10.),
+    delta=patterntools.Pwhite(0., 2.),
     duration=patterntools.Pwhite(0.1, 0.5),
     frequency=patterntools.Pwhite(minimum=55, maximum=1760),
-    pan=patterntools.Pwhite(),
+    pan=patterntools.Pwhite(-1.0, 1.0),
     )
 
 dust_pattern = patterntools.Pbind(
@@ -67,19 +67,24 @@ freqshift_pattern = patterntools.Pbind(
 
 pattern = patterntools.Pbus(
     patterntools.Ppar([
-        allpass_pattern,
+        #allpass_pattern,
         mono_chorus_pattern,
-        pitchshift_pattern,
+        #pitchshift_pattern,
         freeverb_pattern,
-        freqshift_pattern,
-        allpass_pattern,
+        #freqshift_pattern,
+        #allpass_pattern,
         default_pattern,
-        dust_pattern,
+        #dust_pattern,
         ]),
     )
 
-with session.at(0):
-    session.add_synth(
+durations = []
+with spoopy_v0.at(0):
+    group = spoopy_v0.add_group()
+    for i in range(6):
+        duration = group.inscribe(pattern, duration=60)
+        durations.append(duration)
+    compressor_synth = spoopy_v0.add_synth(
         add_action='ADD_TO_TAIL',
         synthdef=synthdefs.multiband_compressor,
         frequency_1=200,
@@ -93,13 +98,12 @@ with session.at(0):
         band_2_slope_above=0.5,
         band_3_slope_above=0.25,
         band_4_slope_above=0.125,
-        band_1_pregain=6,
-        band_2_pregain=3,
+        band_1_pregain=0,
+        band_2_pregain=0,
         band_3_pregain=-3,
         band_4_pregain=-3,
         )
 
-with session.at(0):
-    group = session.add_group()
-    for _ in range(6):
-        pattern.inscribe(session, duration=180)
+max_duration = max(durations)
+compressor_synth.set_duration(max_duration)
+group.set_duration(max_duration)
