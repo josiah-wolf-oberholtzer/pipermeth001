@@ -67,14 +67,14 @@ freqshift_pattern = patterntools.Pbind(
 
 pattern = patterntools.Pbus(
     patterntools.Ppar([
-        #allpass_pattern,
+        allpass_pattern,
         mono_chorus_pattern,
-        #pitchshift_pattern,
+        pitchshift_pattern,
         freeverb_pattern,
-        #freqshift_pattern,
-        #allpass_pattern,
+        freqshift_pattern,
+        allpass_pattern,
         default_pattern,
-        #dust_pattern,
+        dust_pattern,
         ]),
     )
 
@@ -82,7 +82,7 @@ durations = []
 with spoopy_v0.at(0):
     group = spoopy_v0.add_group()
     for i in range(6):
-        duration = group.inscribe(pattern, duration=60, seed=i)
+        duration = group.inscribe(pattern, duration=180, seed=i)
         durations.append(duration)
     compressor_synth = spoopy_v0.add_synth(
         add_action='ADD_TO_TAIL',
@@ -109,6 +109,6 @@ with spoopy_v0.at(0):
         )
 
 
-max_duration = max(durations)
+max_duration = max(durations) + 10
 for node in (group, compressor_synth, limiter_synth):
     node.set_duration(max_duration)
