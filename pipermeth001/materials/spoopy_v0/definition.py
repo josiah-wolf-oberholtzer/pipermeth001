@@ -19,7 +19,7 @@ default_pattern = patterntools.Pbind(
 
 dust_pattern = patterntools.Pbind(
     synthdef=project_synthdefs.durated_dust,
-    delta=patterntools.Pwhite(0.0, 15),
+    delta=patterntools.Pwhite(1.0, 15),
     duration=patterntools.Pwhite(0.05, 5),
     level=patterntools.Pwhite(),
     )
