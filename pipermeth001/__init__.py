@@ -1,11 +1,12 @@
 # -*- encoding: utf-8 -*-
+import os
 from supriya.tools.commandlinetools import ProjectSettings
 
-from pipermeth001 import tools  # noqa
-from pipermeth001 import synthdefs  # noqa
-from pipermeth001 import materials  # noqa
-from pipermeth001 import composites  # noqa
 
-project_settings = ProjectSettings()
+project_settings = ProjectSettings(os.path.join(
+    os.path.dirname(__file__),
+    'project-settings.yml',
+    ))
 
+del os
 del ProjectSettings

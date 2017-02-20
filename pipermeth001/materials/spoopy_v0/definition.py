@@ -1,8 +1,8 @@
 # -*- encoding: utf-8 -*-
+from abjad import systemtools
 from supriya import Session
 from supriya import patterntools
 from supriya import synthdefs
-
 from pipermeth001 import synthdefs as project_synthdefs
 
 
@@ -64,7 +64,6 @@ freqshift_pattern = patterntools.Pbind(
     duration=patterntools.Pwhite(0.5, 10),
     level=patterntools.Pwhite(),
     )
-
 pattern = patterntools.Pbus(
     patterntools.Ppar([
         allpass_pattern,
@@ -81,9 +80,11 @@ pattern = patterntools.Pbus(
 durations = []
 with spoopy_v0.at(0):
     group = spoopy_v0.add_group()
-    for i in range(6):
-        duration = group.inscribe(pattern, duration=180, seed=i)
-        durations.append(duration)
+    for i in range(3):
+        with systemtools.Timer() as timer:
+            duration = group.inscribe(pattern, duration=180, seed=i)
+            durations.append(duration)
+            print('Elapsed: {}'.format(timer.elapsed_time))
     compressor_synth = spoopy_v0.add_synth(
         add_action='ADD_TO_TAIL',
         synthdef=synthdefs.multiband_compressor,
