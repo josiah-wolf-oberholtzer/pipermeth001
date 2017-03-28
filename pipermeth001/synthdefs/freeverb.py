@@ -25,15 +25,13 @@ factory = factory.with_input()
 factory = factory.with_signal_block(signal_block_one)
 factory = factory.with_signal_block(signal_block_two)
 
-nrt_freeverb_factory = factory.with_output(
-    crossfaded=True,
-    leveled=True,
-    windowed=True,
-    )
+nrt_freeverb_factory = factory \
+    .with_output(crossfaded=True, leveled=True, windowed=True)
 
 rt_freeverb_factory = factory \
-    .with_silence_detection() \
-    .with_output(crossfaded=True)
+    .with_gate() \
+    .with_output(crossfaded=True) \
+    .with_silence_detection()
 
 nrt_freeverb = nrt_freeverb_factory.build()
 rt_freeverb = rt_freeverb_factory.build()

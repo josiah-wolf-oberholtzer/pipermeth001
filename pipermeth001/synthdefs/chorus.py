@@ -40,15 +40,13 @@ factory = factory.with_signal_block(signal_block_one)
 factory = factory.with_signal_block(signal_block_two)
 factory = factory.with_feedback_loop(feedback_loop)
 
-nrt_chorus_factory = factory.with_output(
-    crossfaded=True,
-    leveled=True,
-    windowed=True,
-    )
+nrt_chorus_factory = factory \
+    .with_output(crossfaded=True, leveled=True, windowed=True)
 
 rt_chorus_factory = factory \
-    .with_silence_detection() \
-    .with_output(crossfaded=True)
+    .with_gate() \
+    .with_output(crossfaded=True) \
+    .with_silence_detection()
 
 nrt_chorus = nrt_chorus_factory.build()
 rt_chorus = rt_chorus_factory.build()

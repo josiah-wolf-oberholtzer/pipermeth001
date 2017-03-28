@@ -4,8 +4,7 @@ from supriya import ugentools
 
 
 def signal_block_one(builder, source, state):
-    source = ugentools.PitchShift.ar(
-        source=source,
+    source = ugentools.PitchShift.ar( source=source,
         pitch_dispersion=builder['pitch_dispersion'],
         pitch_ratio=builder['pitch_shift'].semitones_to_ratio(),
         time_dispersion=builder['time_dispersion'] * builder['window_size'],
@@ -39,15 +38,13 @@ factory = factory.with_signal_block(signal_block_one)
 factory = factory.with_signal_block(signal_block_two)
 factory = factory.with_feedback_loop(feedback_loop)
 
-nrt_pitchshift_factory = factory.with_output(
-    crossfaded=True,
-    leveled=True,
-    windowed=True,
-    )
+nrt_pitchshift_factory = factory \
+    .with_output(crossfaded=True, leveled=True, windowed=True)
 
 rt_pitchshift_factory = factory \
-    .with_silence_detection() \
-    .with_output(crossfaded=True)
+    .with_gate() \
+    .with_output(crossfaded=True) \
+    .with_silence_detection()
 
 nrt_pitchshift = nrt_pitchshift_factory.build()
 rt_pitchshift = rt_pitchshift_factory.build()
