@@ -1,25 +1,9 @@
 # -*- encoding: utf-8 -*-
-from supriya import DoneAction, SynthDefBuilder
 from supriya import synthdeftools
 from supriya import ugentools
 
 
-channel_count = 2
-
-with SynthDefBuilder(
-    duration=1.0,
-    level=1.0,
-    out=0,
-    ) as builder:
-    window = ugentools.Line.kr(
-        done_action=2,
-        duration=builder['duration'],
-        ).hanning_window()
-    source = ugentools.In.ar(
-        bus=builder['out'],
-        channel_count=channel_count,
-        )
-    source += ugentools.LocalIn.ar(channel_count=channel_count)
+def signal_block_one(builder, source, state):
     source *= ugentools.Line.kr(duration=0.1)
     allpasses = []
     maximum_delay = ugentools.Rand.ir(0.1, 1)
@@ -37,18 +21,42 @@ with SynthDefBuilder(
                 )
         allpasses.append(output)
     source = synthdeftools.UGenArray(allpasses)
+    return source
+
+
+def signal_block_two(builder, source, state):
     source = ugentools.LeakDC.ar(source=source)
     source = ugentools.Limiter.ar(source=source)
-    ugentools.XOut.ar(
-        bus=builder['out'],
-        crossfade=window,
-        source=source * builder['level'],
-        )
-    ugentools.LocalOut.ar(
-        source=source * -0.9 * ugentools.LFDNoise1.kr(frequency=0.1)
-        )
-    ugentools.DetectSilence.kr(
-        done_action=DoneAction.FREE_SYNTH,
-        source=ugentools.Mix.new(source),
-        )
-durated_allpass = builder.build()
+    return source
+
+
+def feedback_loop(builder, source, state):
+    source = source * -0.9 * ugentools.LFDNoise1.kr(frequency=0.1)
+    return source
+
+
+factory = synthdeftools.SynthDefFactory(channel_count=2)
+factory = factory.with_input()
+factory = factory.with_signal_block(signal_block_one)
+factory = factory.with_signal_block(signal_block_two)
+factory = factory.with_feedback_loop(feedback_loop)
+
+nrt_allpass_factory = factory.with_output(
+    crossfaded=True,
+    leveled=True,
+    windowed=True,
+    )
+
+rt_allpass_factory = factory \
+    .with_silence_detection() \
+    .with_output(crossfaded=True)
+
+nrt_allpass = nrt_allpass_factory.build()
+rt_allpass = rt_allpass_factory.build()
+
+__all__ = (
+    'nrt_allpass',
+    'nrt_allpass_factory',
+    'rt_allpass',
+    'rt_allpass_factory',
+    )
