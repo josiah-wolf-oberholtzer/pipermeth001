@@ -16,11 +16,11 @@ with SynthDefBuilder(
         done_action=2,
         duration=builder['duration'],
         ).hanning_window()
-    in_ = ugentools.In.ar(
+    source = ugentools.In.ar(
         bus=builder['out'],
         channel_count=channel_count,
         )
-    source = in_ * window
+    #source = in_ * window
     source = ugentools.FreeVerb.ar(
         source=source,
         damping=builder['damping'],
@@ -32,12 +32,12 @@ with SynthDefBuilder(
     source = ugentools.Limiter.ar(source=source)
     ugentools.XOut.ar(
         bus=builder['out'],
-        crossfade=window,
+        crossfade=window * builder['level'],
         source=source,
         )
     ugentools.DetectSilence.kr(
         done_action=DoneAction.FREE_SYNTH,
-        source=ugentools.Mix.new(tuple(in_) + tuple(source)),
+        source=ugentools.Mix.new(source),
         )
 
 durated_freeverb = builder.build()

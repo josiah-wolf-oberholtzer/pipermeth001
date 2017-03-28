@@ -14,27 +14,25 @@ with SynthDefBuilder(
         done_action=2,
         duration=builder['duration'],
         ).hanning_window()
-    in_ = ugentools.In.ar(
+    source = ugentools.In.ar(
         bus=builder['out'],
         channel_count=channel_count,
         )
-    source = in_ * window
     source = ugentools.FreqShift.ar(
         source=source,
-        frequency=ugentools.LFDNoise3.kr(frequency=0.1) * 2000,
-        phase=ugentools.LFNoise2.kr(frequency=0.1),
+        frequency=ugentools.LFDNoise3.kr(frequency=0.01) * 2000,
+        phase=ugentools.LFNoise2.kr(frequency=0.01),
         )
     source = ugentools.LeakDC.ar(source=source)
     source = (source * 1.5).tanh()
     source = ugentools.Limiter.ar(source=source)
     ugentools.XOut.ar(
         bus=builder['out'],
-        crossfade=window,
+        crossfade=window * builder['level'],
         source=source,
         )
     ugentools.DetectSilence.kr(
         done_action=DoneAction.FREE_SYNTH,
-        source=ugentools.Mix.new(tuple(in_) + tuple(source)),
+        source=ugentools.Mix.new(source),
         )
-
 durated_freqshift = builder.build()

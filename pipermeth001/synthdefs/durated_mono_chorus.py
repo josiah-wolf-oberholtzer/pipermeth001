@@ -23,7 +23,7 @@ with SynthDefBuilder(
     source += ugentools.LocalIn.ar(channel_count=1)
     allpasses = []
     allpass_count = 16
-    maximum_delay_time = 0.05
+    maximum_delay_time = 0.01
     for _ in range(allpass_count):
         allpass = ugentools.AllpassC.ar(
             decay_time=ugentools.LFDNoise3.kr(
@@ -38,11 +38,11 @@ with SynthDefBuilder(
         allpasses.append(allpass)
     source = ugentools.Mix.new(allpasses) / allpass_count
     source = ugentools.LeakDC.ar(source=source)
-    source = (source * 1.5).tanh()
+    #source = (source * 1.5).tanh()
     source = ugentools.Limiter.ar(source=source)
     ugentools.XOut.ar(
         bus=builder['out'],
-        crossfade=window,
+        crossfade=window * builder['level'],
         source=[source, source],
         )
     ugentools.LocalOut.ar(

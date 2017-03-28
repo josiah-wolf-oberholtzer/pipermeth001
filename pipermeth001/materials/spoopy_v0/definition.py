@@ -11,9 +11,9 @@ spoopy_v0 = Session(0, 2)
 default_pattern = patterntools.Pbind(
     synthdef=synthdefs.default,
     amplitude=patterntools.Pwhite(),
-    delta=patterntools.Pwhite(0., 2.),
-    duration=patterntools.Pwhite(0.1, 0.5),
-    frequency=patterntools.Pwhite(minimum=55, maximum=1760),
+    delta=patterntools.Pwhite(0., 10.),
+    duration=patterntools.Pwhite(0.1, 30.0),
+    frequency=patterntools.Pwhite(minimum=1, maximum=440),
     pan=patterntools.Pwhite(-1.0, 1.0),
     )
 
@@ -27,7 +27,7 @@ dust_pattern = patterntools.Pbind(
 pitchshift_pattern = patterntools.Pbind(
     synthdef=project_synthdefs.durated_pitchshift,
     delta=patterntools.Pwhite(0.5, 10),
-    duration=patterntools.Pwhite(0.5, 10),
+    duration=patterntools.Pwhite(0.5, 20),
     level=patterntools.Pwhite(),
     pitch_dispersion=patterntools.Pwhite(0., 0.1),
     pitch_shift=patterntools.Pwhite(-12.0, 12.0),
@@ -38,7 +38,7 @@ pitchshift_pattern = patterntools.Pbind(
 freeverb_pattern = patterntools.Pbind(
     synthdef=project_synthdefs.durated_freeverb,
     damping=patterntools.Pwhite(),
-    delta=patterntools.Pwhite(0.5, 10),
+    delta=patterntools.Pwhite(0.5, 20),
     duration=patterntools.Pwhite(0.5, 20),
     level=patterntools.Pwhite(),
     room_size=patterntools.Pwhite(),
@@ -46,14 +46,14 @@ freeverb_pattern = patterntools.Pbind(
 
 allpass_pattern = patterntools.Pbind(
     synthdef=project_synthdefs.durated_allpass,
-    delta=patterntools.Pwhite(0.5, 10),
+    delta=patterntools.Pwhite(0.5, 20),
     duration=patterntools.Pwhite(0.5, 10),
     level=patterntools.Pwhite(),
     )
 
 mono_chorus_pattern = patterntools.Pbind(
     synthdef=project_synthdefs.durated_mono_chorus,
-    delta=patterntools.Pwhite(0.5, 10),
+    delta=patterntools.Pwhite(0.5, 20),
     duration=patterntools.Pwhite(0.5, 20),
     level=patterntools.Pwhite(),
     )
@@ -64,6 +64,7 @@ freqshift_pattern = patterntools.Pbind(
     duration=patterntools.Pwhite(0.5, 10),
     level=patterntools.Pwhite(),
     )
+
 pattern = patterntools.Pbus(
     patterntools.Ppar([
         allpass_pattern,
@@ -75,6 +76,7 @@ pattern = patterntools.Pbus(
         default_pattern,
         dust_pattern,
         ]),
+    release_time=5.0,
     )
 
 durations = []
