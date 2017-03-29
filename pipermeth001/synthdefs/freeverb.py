@@ -20,7 +20,11 @@ def signal_block_two(builder, source, state):
     return source
 
 
-factory = synthdeftools.SynthDefFactory(channel_count=2)
+factory = synthdeftools.SynthDefFactory(
+    channel_count=2,
+    damping=0.9,
+    room_size=0.5,
+    )
 factory = factory.with_input()
 factory = factory.with_signal_block(signal_block_one)
 factory = factory.with_signal_block(signal_block_two)

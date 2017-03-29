@@ -10,19 +10,22 @@ def signal_block_one(builder, source, state):
         time_dispersion=builder['time_dispersion'] * builder['window_size'],
         window_size=builder['window_size'],
         )
+    return source
 
 
 def signal_block_two(builder, source, state):
     source = ugentools.LeakDC.ar(source=source)
     source = (source * 1.5).tanh()
     source = ugentools.Limiter.ar(source=source)
+    return source
 
 
 def feedback_loop(builder, source, state):
     sources = []
     for channel in source:
-        sources.append(channel * -0.9 * ugentools.LFDNoise1.kr(frequency=0.1))
-    sources = [sources[1:]] + [sources[0]]
+        channel = channel * -0.9 * ugentools.LFDNoise1.kr(frequency=0.1)
+        sources.append(channel)
+    sources = sources[1:] + [sources[0]]
     return synthdeftools.UGenArray(sources)
 
 
