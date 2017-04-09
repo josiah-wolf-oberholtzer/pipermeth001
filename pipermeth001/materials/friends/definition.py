@@ -37,7 +37,7 @@ warp_buffer_player_pattern = patterntools.Pbind(
     direction=patterntools.Prand([-1, 1], repetitions=None),
     duration=0,
     gain=patterntools.Pwhite(-24, -12),
-    overlaps=patterntools.Prand([2, 16, 1, 16, 1, 8, 32, 32], repetitions=None),
+    overlaps=patterntools.Prand([2, 16, 1, 16, 8, 32, 32], repetitions=None),
     pan=patterntools.Pwhite(-1.0, 1.0),
     rate=patterntools.Pwhite(32, 128),
     synthdef=synthdefs.warp_buffer_player,
@@ -125,11 +125,13 @@ pattern = patterntools.Pbus(
     release_time=30.0,
     )
 
-with session.at(0):
-    minutes = 3
-    iterations = 4
-    for i in range(iterations):
+minutes = 10
+iterations = 4
+for i in range(iterations):
+    with session.at(i * 30):
         session.inscribe(pattern, duration=60 * minutes, seed=i)
+
+with session.at(0):
     session.add_synth(
         add_action=AddAction.ADD_TO_TAIL,
         synthdef=system_synthdefs.multiband_compressor,

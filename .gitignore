@@ -43,5 +43,6 @@ nosetests.xml
 .DS_Store
 
 # Supriya
+render.yml
 render.aif*
 render.wav*
