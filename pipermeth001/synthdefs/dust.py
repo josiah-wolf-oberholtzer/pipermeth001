@@ -21,3 +21,5 @@ with SynthDefBuilder(
         )
 
 durated_dust = builder.build()
+
+__all__ = ['durated_dust']
