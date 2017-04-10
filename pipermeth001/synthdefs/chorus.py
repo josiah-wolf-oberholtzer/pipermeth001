@@ -5,21 +5,25 @@ from supriya import ugentools
 
 def signal_block_one(builder, source, state):
     allpasses = []
-    allpass_count = 16
+    iterations = 16
     maximum_delay_time = 0.01
-    for _ in range(allpass_count):
+    for _ in range(iterations):
         allpass = ugentools.AllpassC.ar(
             decay_time=ugentools.LFDNoise3.kr(
-                frequency=ugentools.ExpRand.ir(0.1, 5),
+                frequency=ugentools.ExpRand.ir(0.01, 20),
                 ).scale(-1, 1, 0., 0.1),
             delay_time=ugentools.LFDNoise3.kr(
-                frequency=ugentools.ExpRand.ir(0.1, 5),
+                frequency=ugentools.ExpRand.ir(0.01, 20),
                 ).scale(-1, 1, 0., maximum_delay_time),
             maximum_delay_time=maximum_delay_time,
             source=source,
             )
         allpasses.append(allpass)
-    source = ugentools.Mix.new(allpasses) / allpass_count
+    source = ugentools.Mix.multichannel(
+        allpasses,
+        state['channel_count'],
+        )
+    source /= (iterations / state['channel_count'])
     return source
 
 
@@ -30,7 +34,9 @@ def signal_block_two(builder, source, state):
 
 
 def feedback_loop(builder, source, state):
-    source = source * -0.9 * ugentools.LFDNoise1.kr(frequency=0.1)
+    source = (source[-1],) + source[:-1]
+    source = synthdeftools.UGenArray(source)
+    source = source * -0.95 * ugentools.LFDNoise1.kr(frequency=0.1)
     return source
 
 

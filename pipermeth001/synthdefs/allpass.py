@@ -31,7 +31,9 @@ def signal_block_two(builder, source, state):
 
 
 def feedback_loop(builder, source, state):
-    source = source * -0.9 * ugentools.LFDNoise1.kr(frequency=0.1)
+    source = (source[-1],) + source[:-1]
+    source = synthdeftools.UGenArray(source)
+    source = source * -0.95 * ugentools.LFDNoise1.kr(frequency=0.1)
     return source
 
 

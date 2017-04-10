@@ -40,7 +40,10 @@ warp_buffer_player_pattern = patterntools.Pbind(
     overlaps=patterntools.Prand([2, 16, 1, 16, 8, 32, 32], repetitions=None),
     pan=patterntools.Pwhite(-1.0, 1.0),
     rate=patterntools.Pwhite(32, 128),
-    synthdef=synthdefs.warp_buffer_player,
+    synthdef=patterntools.Prand([
+        synthdefs.warp_buffer_player_factory.build(iterations=4),
+        synthdefs.warp_buffer_player_factory.build(iterations=1),
+        ], repetitions=None),
     transpose=patterntools.Pwhite(-12.0, 12.0),
     )
 
@@ -125,7 +128,7 @@ pattern = patterntools.Pbus(
     release_time=30.0,
     )
 
-minutes = 10
+minutes = 3
 iterations = 4
 for i in range(iterations):
     with session.at(i * 30):
