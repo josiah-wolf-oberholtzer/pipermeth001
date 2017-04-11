@@ -5,24 +5,21 @@ from supriya import ugentools
 
 def signal_block_one(builder, source, state):
     channels = []
+    fft_size = 1024 * 16
+    hop_size = 1. / 64
     for channel in source:
         pv_chain = ugentools.FFT.new(
             source=channel,
-            window_size=8192,
-            hop=0.125,
+            window_size=fft_size,
+            hop=hop_size,
             )
         pv_chain = ugentools.PV_MagBelow(
             pv_chain=pv_chain,
-            threshold=5,
+            threshold=2,
             )
         channel = ugentools.IFFT.ar(
             pv_chain=pv_chain,
-            window_size=8192,
-            )
-        channel = ugentools.Convolution.ar(
-            source=channel,
-            kernel=ugentools.PinkNoise.ar() * 0.25,
-            framesize=8192,
+            window_size=fft_size,
             )
         channels.append(channel)
     source = synthdeftools.UGenArray(channels)

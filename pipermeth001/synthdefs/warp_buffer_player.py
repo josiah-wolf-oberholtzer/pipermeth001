@@ -4,17 +4,18 @@ from supriya import ugentools
 
 
 def parameter_block(iterations, builder, state):
-    transposition = builder['transpose'] + ugentools.LFNoise2.kr(
+    transposition_flux = ugentools.LFNoise2.kr(
         frequency=[0.01] * iterations,
-        ) * (1. / 16)
+        ) * (1. / 8)
+    transposition = builder['transpose'] + transposition_flux
     frequency_scaling = transposition.semitones_to_ratio()
     frequency_scaling *= builder['direction']
     pointer_scrub = ugentools.LFNoise2.kr(
         frequency=[0.01] * iterations,
-        ) * state['window'] * 0.1
+        ) * state['window'] * 0.05
     pointer = state['line'] + pointer_scrub
     window_rand_ratio = ugentools.LFDNoise3.kr(frequency=[0.01] * iterations)
-    window_rand_ratio = window_rand_ratio.scale(-1, 1, 0., 0.25)
+    window_rand_ratio = window_rand_ratio.scale(-1, 1, 0., 0.125)
     window_size = ugentools.LFDNoise3.kr(frequency=0.05)
     window_size += ugentools.LFNoise2.kr(frequency=[0.05] * iterations) * 0.1
     window_size = window_size.scale(-1.1, 1.1, 0.001, 0.5)
@@ -44,7 +45,7 @@ def signal_block(builder, source, state):
             source[i] *= -1
     if state['channel_count'] > 1:
         position = ugentools.LFNoise2.kr(
-            frequency=[0.01] * iterations,
+            frequency=[0.05] * iterations,
             )
         if state['channel_count'] > 2:
             source = ugentools.PanAz.ar(
@@ -59,7 +60,6 @@ def signal_block(builder, source, state):
                 )
     source = ugentools.Mix.multichannel(source, state['channel_count'])
     source = source * state['window'] * builder['gain'].db_to_amplitude()
-    source = source.tanh()
     return source
 
 

@@ -4,7 +4,8 @@ from supriya import ugentools
 
 
 def signal_block_one(builder, source, state):
-    source = ugentools.PitchShift.ar( source=source,
+    source = ugentools.PitchShift.ar(
+        source=source,
         pitch_dispersion=builder['pitch_dispersion'],
         pitch_ratio=builder['pitch_shift'].semitones_to_ratio(),
         time_dispersion=builder['time_dispersion'] * builder['window_size'],
@@ -15,18 +16,15 @@ def signal_block_one(builder, source, state):
 
 def signal_block_two(builder, source, state):
     source = ugentools.LeakDC.ar(source=source)
-    source = (source * 1.5).tanh()
+    source = source * 2
     source = ugentools.Limiter.ar(source=source)
     return source
 
 
 def feedback_loop(builder, source, state):
-    sources = []
-    for channel in source:
-        channel = channel * -0.9 * ugentools.LFDNoise1.kr(frequency=0.1)
-        sources.append(channel)
-    sources = sources[1:] + [sources[0]]
-    return synthdeftools.UGenArray(sources)
+    source = synthdeftools.UGenArray((source[-1],) + source[:-1])
+    source = source * 0.95 * ugentools.LFDNoise1.kr(frequency=0.1).cubed()
+    return source
 
 
 factory = synthdeftools.SynthDefFactory(
