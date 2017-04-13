@@ -41,13 +41,23 @@ def iteration_block(source, state):
 def signal_block(builder, source, state):
     allpasses = []
     iterations = 16
+    crossover_frequency = 500
+    lows = ugentools.LPF.ar(
+        source=source,
+        frequency=crossover_frequency,
+        )
+    highs = ugentools.HPF.ar(
+        source=source,
+        frequency=crossover_frequency,
+        )
     for i in range(iterations):
-        allpass = iteration_block(source, state)
+        allpass = iteration_block(highs, state)
         if i % 2:
             allpass *= -1
         allpasses.extend(allpass)
     source = ugentools.Mix.multichannel(allpasses, state['channel_count'])
     source *= 1. / iterations
+    source += lows
     return source
 
 
@@ -64,7 +74,7 @@ def signal_block_post(builder, source, state):
 def feedback_loop(builder, source, state):
     source = synthdeftools.UGenArray((source[-1],) + source[:-1])
     source *= ugentools.LFNoise1.kr(frequency=0.05).squared()
-    source *= -0.95
+    source *= -0.9
     source = ugentools.HPF.ar(
         source=source,
         frequency=500,

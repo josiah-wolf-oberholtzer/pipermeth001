@@ -21,7 +21,7 @@ def parameter_block(iterations, builder, state):
     # Window rand ratio
     window_rand_ratio = ugentools.LFNoise2.kr(
         frequency=[0.01] * iterations)
-    window_rand_ratio = window_rand_ratio.scale(-1, 1, 0., 0.1)
+    window_rand_ratio = window_rand_ratio.scale(-1, 1, 0., 0.01)
     # Window size
     window_size_variance = ugentools.LFNoise1.kr(
         frequency=[0.01] * iterations,
@@ -29,7 +29,7 @@ def parameter_block(iterations, builder, state):
     window_size = ugentools.LFNoise2.kr(
         frequency=0.01,
         ) + window_size_variance
-    window_size = window_size.scale(-1.1, 1.1, 0.01, 0.5)
+    window_size = window_size.scale(-1.1, 1.1, 0.2, 0.5)
     # All parameters
     parameters = {
         'buffer_id': builder['buffer_id'],

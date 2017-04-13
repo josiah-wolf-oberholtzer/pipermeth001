@@ -37,20 +37,13 @@ warp_buffer_player_pattern = patterntools.Pbind(
     direction=patterntools.Prand([-1, 1], repetitions=None),
     duration=0,
     gain=patterntools.Pwhite(-18, -12),
-    overlaps=patterntools.Prand([
-        1,
-        2,
-        8,
-        16,
-        16,
-        32,
-        32,
-        32,
-        ], repetitions=None),
+    overlaps=patterntools.Prand(
+        [1, 2, 8, 16, 16, 32, 32, 32] * 4,
+        repetitions=None),
     rate=patterntools.Pwhite(64, 128),
     synthdef=patterntools.Prand([
         synthdefs.warp_buffer_player_factory.build(iterations=4),
-        synthdefs.warp_buffer_player_factory.build(iterations=2),
+        synthdefs.warp_buffer_player_factory.build(iterations=1),
         ], repetitions=None),
     transpose=patterntools.Pwhite(-12.0, 12.0),
     )
@@ -79,7 +72,9 @@ bpf_sweep_pattern = patterntools.Pbindf(
     synthdef=synthdefs.nrt_bpf_sweep,
     delta=patterntools.Pwhite(30, 90),
     duration=patterntools.Pwhite(30, 60),
-    level=patterntools.Pwhite(0.0, 1.0),
+    level=patterntools.Pwhite(0.5, 1.0),
+    start_frequency=patterntools.Pwhite(10000, 20000),
+    stop_frequency=patterntools.Pwhite(100, 5000),
     )
 
 ### CHORUS ###
@@ -145,20 +140,16 @@ pattern = patterntools.Ppar([
     ])
 pattern = pattern.with_group(release_time=release_time)
 pattern = pattern.with_effect(
-    system_synthdefs.multiband_compressor,
+    synthdefs.multiband_compressor,
     release_time=release_time,
-    pregain=6,
-    frequency_1=250,
-    frequency_2=1000,
-    frequency_3=2500,
-    postgain=0,
+    limiter_lookahead=5,
     )
 pattern = pattern.with_bus(release_time=release_time)
 
 ### RENDER ###
 
-minutes = 10  # 10
-iterations = 5  # 3
+minutes = 3
+iterations = 3
 for i in range(iterations):
     with session.at(i * 10):
         session.inscribe(pattern, duration=60 * minutes, seed=i)
@@ -167,9 +158,11 @@ with session.at(0):
     session.add_synth(
         synthdef=system_synthdefs.multiband_compressor,
         add_action='ADD_TO_TAIL',
+        pregain=0,
         frequency_1=500,
         frequency_2=2000,
         frequency_3=5000,
+        limiter_lookahead=5,
         )
 
 friends = session
