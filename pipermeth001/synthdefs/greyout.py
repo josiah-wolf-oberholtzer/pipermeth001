@@ -3,11 +3,23 @@ from supriya import synthdeftools
 from supriya import ugentools
 
 
-def signal_block_one(builder, source, state):
+def signal_block_pre(builder, source, state):
+    source = ugentools.Limiter.ar(
+        duration=ugentools.Rand.ir(0.005, 0.015),
+        source=source,
+        )
+    return source
+
+
+def signal_block(builder, source, state):
     channels = []
     fft_size = 1024 * 16
     hop_size = 1. / 64
     for channel in source:
+        channel = ugentools.HPF.ar(
+            source=channel,
+            frequency=1000,
+            )
         pv_chain = ugentools.FFT.new(
             source=channel,
             window_size=fft_size,
@@ -15,7 +27,7 @@ def signal_block_one(builder, source, state):
             )
         pv_chain = ugentools.PV_MagBelow(
             pv_chain=pv_chain,
-            threshold=2,
+            threshold=0.5,
             )
         channel = ugentools.IFFT.ar(
             pv_chain=pv_chain,
@@ -26,24 +38,45 @@ def signal_block_one(builder, source, state):
     return source
 
 
-def signal_block_two(builder, source, state):
+def signal_block_post(builder, source, state):
     source = ugentools.LeakDC.ar(source=source)
-    source = ugentools.Limiter.ar(source=source)
+    source *= builder['gain'].db_to_amplitude()
+    source = ugentools.Limiter.ar(
+        duration=ugentools.Rand.ir(0.005, 0.015),
+        source=source,
+        )
     return source
 
 
-factory = synthdeftools.SynthDefFactory(channel_count=2)
+def feedback_loop(builder, source, state):
+    source = synthdeftools.UGenArray((source[-1],) + source[:-1])
+    source *= ugentools.LFNoise1.kr(frequency=0.05).squared().squared()
+    source *= -0.75
+    source = ugentools.DelayC.ar(
+        source=source,
+        delay_time=ugentools.LFNoise1.kr(
+            frequency=0.05,
+            ).scale(-1, 1, 0.1, 0.2),
+        maximum_delay_time=0.2,
+        )
+    return source
+
+
+factory = synthdeftools.SynthDefFactory(
+    channel_count=2,
+    gain=0,
+    )
 factory = factory.with_input()
-factory = factory.with_signal_block(signal_block_one)
-factory = factory.with_signal_block(signal_block_two)
+factory = factory.with_signal_block(signal_block_pre)
+factory = factory.with_signal_block(signal_block)
+factory = factory.with_signal_block(signal_block_post)
+factory = factory.with_feedback_loop(feedback_loop)
 
 nrt_greyout_factory = factory.with_output(
     crossfaded=True, leveled=True, windowed=True)
 
 rt_greyout_factory = factory \
-    .with_gate() \
-    .with_output(crossfaded=True) \
-    .with_silence_detection()
+    .with_output(crossfaded=True)
 
 nrt_greyout = nrt_greyout_factory.build()
 rt_greyout = rt_greyout_factory.build()

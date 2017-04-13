@@ -1,24 +1,36 @@
 # -*- encoding: utf-8 -*-
+import math
 from supriya import synthdeftools
 from supriya import ugentools
 
 
 def parameter_block(iterations, builder, state):
-    transposition_flux = ugentools.LFNoise2.kr(
+    # Frequency scaling
+    transposition_flux = ugentools.LFNoise1.kr(
         frequency=[0.01] * iterations,
-        ) * (1. / 8)
-    transposition = builder['transpose'] + transposition_flux
+        ) * (1. / 16)
+    transposition = builder['transpose']
+    transposition += transposition_flux
     frequency_scaling = transposition.semitones_to_ratio()
     frequency_scaling *= builder['direction']
-    pointer_scrub = ugentools.LFNoise2.kr(
+    # Buffer pointer
+    pointer_scrub = ugentools.LFNoise1.kr(
         frequency=[0.01] * iterations,
-        ) * state['window'] * 0.05
+        ) * state['window'] * 0.1
     pointer = state['line'] + pointer_scrub
-    window_rand_ratio = ugentools.LFDNoise3.kr(frequency=[0.01] * iterations)
-    window_rand_ratio = window_rand_ratio.scale(-1, 1, 0., 0.125)
-    window_size = ugentools.LFDNoise3.kr(frequency=0.05)
-    window_size += ugentools.LFNoise2.kr(frequency=[0.05] * iterations) * 0.1
-    window_size = window_size.scale(-1.1, 1.1, 0.001, 0.5)
+    # Window rand ratio
+    window_rand_ratio = ugentools.LFNoise2.kr(
+        frequency=[0.01] * iterations)
+    window_rand_ratio = window_rand_ratio.scale(-1, 1, 0., 0.1)
+    # Window size
+    window_size_variance = ugentools.LFNoise1.kr(
+        frequency=[0.01] * iterations,
+        ) * 0.1
+    window_size = ugentools.LFNoise2.kr(
+        frequency=0.01,
+        ) + window_size_variance
+    window_size = window_size.scale(-1.1, 1.1, 0.01, 0.5)
+    # All parameters
     parameters = {
         'buffer_id': builder['buffer_id'],
         'frequency_scaling': frequency_scaling,
@@ -44,7 +56,7 @@ def signal_block(builder, source, state):
         if i % 2:
             source[i] *= -1
     if state['channel_count'] > 1:
-        position = ugentools.LFNoise2.kr(
+        position = ugentools.LFNoise1.kr(
             frequency=[0.05] * iterations,
             )
         if state['channel_count'] > 2:
@@ -59,7 +71,10 @@ def signal_block(builder, source, state):
                 source=source,
                 )
     source = ugentools.Mix.multichannel(source, state['channel_count'])
-    source = source * state['window'] * builder['gain'].db_to_amplitude()
+    source *= state['window']
+    source *= builder['gain'].db_to_amplitude()
+    if iterations > 1:
+        source *= 1. / math.sqrt(iterations)
     return source
 
 

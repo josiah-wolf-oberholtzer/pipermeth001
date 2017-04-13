@@ -27,6 +27,6 @@ server_options:
     restricted_path: null
     sample_rate: null
     verbosity: 0
-    wire_buffer_count: 64
+    wire_buffer_count: 1024
     zero_configuration: false
 title: pipermeth001

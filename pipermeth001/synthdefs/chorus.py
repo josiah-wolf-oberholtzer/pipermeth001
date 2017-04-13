@@ -1,56 +1,92 @@
 # -*- encoding: utf-8 -*-
-import math
 from supriya import synthdeftools
 from supriya import ugentools
 
 
-def channel_block(source, state):
-    maximum_delay_time = state['maximum_delay_time']
-    source = ugentools.AllpassC.ar(
-        decay_time=ugentools.LFDNoise3.kr(
-            frequency=ugentools.ExpRand.ir(0.01, 10),
-            ).scale(-1, 1, 0., 0.25),
-        delay_time=ugentools.LFDNoise3.kr(
-            frequency=ugentools.ExpRand.ir(0.01, 10),
-            ).scale(-1, 1, 0., maximum_delay_time),
-        maximum_delay_time=maximum_delay_time,
+def signal_block_pre(builder, source, state):
+    source *= ugentools.Line.kr(duration=0.1)  # protect against clicks
+    source = ugentools.Limiter.ar(
+        duration=ugentools.Rand.ir(0.005, 0.015),
         source=source,
         )
     return source
 
 
-def signal_block_one(builder, source, state):
+def iteration_block(source, state):
+    channel_count = state['channel_count']
+    maximum_delay_time = 0.01
+    for _ in range(2):
+        decay_time = ugentools.ExpRand.ir(
+            minimum=[0.001] * channel_count,
+            maximum=[maximum_delay_time * 2] * channel_count,
+            )
+        delay_time = ugentools.LFNoise2.kr(
+            frequency=ugentools.ExpRand.ir(
+                minimum=[0.1] * channel_count,
+                maximum=[5.0] * channel_count,
+                ),
+            ).squared() * maximum_delay_time
+        source = ugentools.AllpassC.ar(
+            decay_time=decay_time,
+            delay_time=delay_time,
+            maximum_delay_time=maximum_delay_time,
+            source=source,
+            )
+        assert len(decay_time) == channel_count
+        assert len(delay_time) == channel_count
+        assert len(source) == channel_count
+    return source
+
+
+def signal_block(builder, source, state):
     allpasses = []
     iterations = 16
-    state['maximum_delay_time'] = 0.01
     for i in range(iterations):
-        allpass = channel_block(source, state)
+        allpass = iteration_block(source, state)
         if i % 2:
             allpass *= -1
         allpasses.extend(allpass)
     source = ugentools.Mix.multichannel(allpasses, state['channel_count'])
-    source *= math.sqrt(1 / (iterations / state['channel_count']))
+    source *= 1. / iterations
     return source
 
 
-def signal_block_two(builder, source, state):
+def signal_block_post(builder, source, state):
     source = ugentools.LeakDC.ar(source=source)
-    source = ugentools.Limiter.ar(source=source)
+    source *= builder['gain'].db_to_amplitude()
+    source = ugentools.Limiter.ar(
+        duration=ugentools.Rand.ir(0.005, 0.015),
+        source=source,
+        )
     return source
 
 
 def feedback_loop(builder, source, state):
-    source = (source[-1],) + source[:-1]
-    source = synthdeftools.UGenArray(source)
-    noise = ugentools.LFDNoise1.kr(frequency=0.1).cubed() * 0.9
-    source = source * noise
+    source = synthdeftools.UGenArray((source[-1],) + source[:-1])
+    source *= ugentools.LFNoise1.kr(frequency=0.05).squared()
+    source *= -0.95
+    source = ugentools.HPF.ar(
+        source=source,
+        frequency=500,
+        )
+    source = ugentools.DelayC.ar(
+        source=source,
+        delay_time=ugentools.LFNoise1.kr(
+            frequency=0.05,
+            ).scale(-1, 1, 0.1, 0.2),
+        maximum_delay_time=0.2,
+        )
     return source
 
 
-factory = synthdeftools.SynthDefFactory(channel_count=2)
+factory = synthdeftools.SynthDefFactory(
+    channel_count=2,
+    gain=0,
+    )
 factory = factory.with_input()
-factory = factory.with_signal_block(signal_block_one)
-factory = factory.with_signal_block(signal_block_two)
+factory = factory.with_signal_block(signal_block_pre)
+factory = factory.with_signal_block(signal_block)
+factory = factory.with_signal_block(signal_block_post)
 factory = factory.with_feedback_loop(feedback_loop)
 
 nrt_chorus_factory = factory \

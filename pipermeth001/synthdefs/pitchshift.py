@@ -3,7 +3,15 @@ from supriya import synthdeftools
 from supriya import ugentools
 
 
-def signal_block_one(builder, source, state):
+def signal_block_pre(builder, source, state):
+    source = ugentools.Limiter.ar(
+        duration=ugentools.Rand.ir(0.005, 0.015),
+        source=source,
+        )
+    return source
+
+
+def signal_block(builder, source, state):
     source = ugentools.PitchShift.ar(
         source=source,
         pitch_dispersion=builder['pitch_dispersion'],
@@ -14,29 +22,46 @@ def signal_block_one(builder, source, state):
     return source
 
 
-def signal_block_two(builder, source, state):
+def signal_block_post(builder, source, state):
     source = ugentools.LeakDC.ar(source=source)
-    source = source * 2
-    source = ugentools.Limiter.ar(source=source)
+    source *= builder['gain'].db_to_amplitude()
+    source = ugentools.Limiter.ar(
+        duration=ugentools.Rand.ir(0.005, 0.015),
+        source=source,
+        )
     return source
 
 
 def feedback_loop(builder, source, state):
     source = synthdeftools.UGenArray((source[-1],) + source[:-1])
-    source = source * 0.95 * ugentools.LFDNoise1.kr(frequency=0.1).cubed()
+    source *= ugentools.LFNoise1.kr(frequency=0.05).squared().squared()
+    source *= -0.75
+    source = ugentools.HPF.ar(
+        source=source,
+        frequency=500,
+        )
+    source = ugentools.DelayC.ar(
+        source=source,
+        delay_time=ugentools.LFNoise1.kr(
+            frequency=0.05,
+            ).scale(-1, 1, 0.1, 0.2),
+        maximum_delay_time=0.2,
+        )
     return source
 
 
 factory = synthdeftools.SynthDefFactory(
     channel_count=2,
-    pitch_shift=0.,
+    gain=0,
     pitch_dispersion=0,
+    pitch_shift=0.,
     time_dispersion=0,
     window_size=0.5,
     )
 factory = factory.with_input()
-factory = factory.with_signal_block(signal_block_one)
-factory = factory.with_signal_block(signal_block_two)
+factory = factory.with_signal_block(signal_block_pre)
+factory = factory.with_signal_block(signal_block)
+factory = factory.with_signal_block(signal_block_post)
 factory = factory.with_feedback_loop(feedback_loop)
 
 nrt_pitchshift_factory = factory \

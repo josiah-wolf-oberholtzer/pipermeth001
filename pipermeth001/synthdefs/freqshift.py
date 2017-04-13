@@ -3,25 +3,21 @@ from supriya import synthdeftools
 from supriya import ugentools
 
 
-def signal_block_one(builder, source, state):
+def signal_block(builder, source, state):
+    sign = builder['sign']
+    frequency = ugentools.LFNoise2.kr(frequency=0.01).scale(
+        -1, 1, 100, 1000) * sign
     source = ugentools.FreqShift.ar(
         source=source,
-        frequency=ugentools.LFDNoise3.kr(frequency=0.01) * 2000,
+        frequency=frequency,
         phase=ugentools.LFNoise2.kr(frequency=0.01),
         )
     return source
 
 
-def signal_block_two(builder, source, state):
-    source = ugentools.LeakDC.ar(source=source)
-    source = ugentools.Limiter.ar(source=source)
-    return source
-
-
-factory = synthdeftools.SynthDefFactory(channel_count=2)
+factory = synthdeftools.SynthDefFactory(channel_count=2, sign=1)
 factory = factory.with_input()
-factory = factory.with_signal_block(signal_block_one)
-factory = factory.with_signal_block(signal_block_two)
+factory = factory.with_signal_block(signal_block)
 
 nrt_freqshift_factory = factory.with_output(
     crossfaded=True, leveled=True, windowed=True)
