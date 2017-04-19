@@ -4,6 +4,7 @@ from supriya import ugentools
 
 
 def signal_block_pre(builder, source, state):
+    source *= ugentools.Line.kr(duration=0.1)  # protect against clicks
     source = ugentools.Limiter.ar(
         duration=ugentools.Rand.ir(0.005, 0.015),
         source=source,
@@ -34,11 +35,10 @@ def signal_block_post(builder, source, state):
 
 def feedback_loop(builder, source, state):
     source = synthdeftools.UGenArray((source[-1],) + source[:-1])
-    source *= ugentools.LFNoise1.kr(frequency=0.05).squared()
-    source *= -0.9
-    source = ugentools.HPF.ar(
+    source *= ugentools.LFNoise1.kr(frequency=0.05).squared().s_curve()
+    source = ugentools.Limiter.ar(
         source=source,
-        frequency=500,
+        level=ugentools.DC.kr(-24).db_to_amplitude(),
         )
     source = ugentools.DelayC.ar(
         source=source,

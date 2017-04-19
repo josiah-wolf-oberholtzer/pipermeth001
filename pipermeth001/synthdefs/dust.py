@@ -1,25 +1,39 @@
 # -*- encoding: utf-8 -*-
-from supriya import SynthDefBuilder
+from supriya import synthdeftools
 from supriya import ugentools
 
 
-with SynthDefBuilder(
-    duration=1.0,
-    level=1.0,
-    out=0,
-    ) as builder:
-    window = ugentools.Line.kr(
-        done_action=2,
-        duration=builder['duration'],
-        ).hanning_window()
+def signal_block(builder, source, state):
+    iterations = int(state.get('iterations', 4))
     source = ugentools.Dust2.ar(
-        density=ugentools.ExpRand.ir(1, 50),
-        ) * window
-    ugentools.Out.ar(
-        bus=builder['out'],
-        source=[source, source],
+        density=[builder['density']] * iterations,
         )
+    source /= builder['density'].square_root()
+    if state['channel_count'] > 1:
+        position = ugentools.LFNoise1.kr(
+            frequency=[0.5] * iterations,
+            ) * 0.5
+        if state['channel_count'] > 2:
+            source = ugentools.PanAz.ar(
+                channel_count=state['channel_count'],
+                position=position,
+                source=source,
+                )
+        else:
+            source = ugentools.Pan2.ar(
+                position=position,
+                source=source,
+                )
+    source = ugentools.Mix.multichannel(source, state['channel_count'])
+    source *= builder['gain'].db_to_amplitude()
+    source /= iterations
+    return source
 
-durated_dust = builder.build()
 
-__all__ = ['durated_dust']
+factory = synthdeftools.SynthDefFactory(density=10, gain=0)
+factory = factory.with_signal_block(signal_block)
+factory = factory.with_output(windowed=True)
+
+nrt_dust = factory.build()
+
+__all__ = ['nrt_dust']

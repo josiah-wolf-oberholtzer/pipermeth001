@@ -4,6 +4,7 @@ from supriya import ugentools
 
 
 def signal_block(builder, source, state):
+    source *= ugentools.Line.kr(duration=0.1)  # protect against clicks
     sign = builder['sign']
     frequency = ugentools.LFNoise2.kr(frequency=0.01).scale(
         -1, 1, 100, 1000) * sign

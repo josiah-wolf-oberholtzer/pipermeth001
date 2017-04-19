@@ -4,11 +4,11 @@ from supriya import ugentools
 
 
 def signal_block(builder, source, state):
-    just_under_half_nyquist = (ugentools.SampleRate.ir() / 2) - 1000
+    just_under_nyquist = (ugentools.SampleRate.ir() / 2) - 1000
     start_frequency = builder['start_frequency'].clip(
-        100, just_under_half_nyquist)
+        100, just_under_nyquist)
     stop_frequency = builder['stop_frequency'].clip(
-        100, just_under_half_nyquist)
+        100, just_under_nyquist)
     frequency = state['line'].scale(
         input_minimum=0,
         input_maximum=1,
@@ -21,11 +21,13 @@ def signal_block(builder, source, state):
         frequency=frequency,
         reciprocal_of_q=0.25,
         )
+    source *= builder['gain'].db_to_amplitude()
     return source
 
 
 factory = synthdeftools.SynthDefFactory(
     channel_count=2,
+    gain=0,
     start_frequency=15000,
     stop_frequency=100,
     )

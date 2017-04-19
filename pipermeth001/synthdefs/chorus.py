@@ -73,11 +73,11 @@ def signal_block_post(builder, source, state):
 
 def feedback_loop(builder, source, state):
     source = synthdeftools.UGenArray((source[-1],) + source[:-1])
-    source *= ugentools.LFNoise1.kr(frequency=0.05).squared()
+    source *= ugentools.LFNoise1.kr(frequency=0.05).squared().s_curve()
     source *= -0.9
     source = ugentools.HPF.ar(
         source=source,
-        frequency=500,
+        frequency=250,
         )
     source = ugentools.DelayC.ar(
         source=source,

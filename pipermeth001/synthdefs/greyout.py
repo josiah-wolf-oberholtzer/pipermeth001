@@ -17,10 +17,6 @@ def signal_block(builder, source, state):
     fft_size = 1024 * 16
     hop_size = 1. / 64
     for channel in source:
-        channel = ugentools.HPF.ar(
-            source=channel,
-            frequency=1000,
-            )
         pv_chain = ugentools.FFT.new(
             source=channel,
             window_size=fft_size,
@@ -51,8 +47,9 @@ def signal_block_post(builder, source, state):
 
 def feedback_loop(builder, source, state):
     source = synthdeftools.UGenArray((source[-1],) + source[:-1])
-    source *= ugentools.LFNoise1.kr(frequency=0.05).squared().squared()
+    source *= ugentools.LFNoise1.kr(frequency=0.05).squared().s_curve()
     source *= -0.75
+    source *= ugentools.Line.kr(duration=0.1)  # protect against clicks
     source = ugentools.DelayC.ar(
         source=source,
         delay_time=ugentools.LFNoise1.kr(
@@ -71,7 +68,7 @@ factory = factory.with_input()
 factory = factory.with_signal_block(signal_block_pre)
 factory = factory.with_signal_block(signal_block)
 factory = factory.with_signal_block(signal_block_post)
-factory = factory.with_feedback_loop(feedback_loop)
+#factory = factory.with_feedback_loop(feedback_loop)
 
 nrt_greyout_factory = factory.with_output(
     crossfaded=True, leveled=True, windowed=True)
