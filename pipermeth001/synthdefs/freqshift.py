@@ -28,8 +28,8 @@ rt_freqshift_factory = factory \
     .with_output(crossfaded=True) \
     .with_silence_detection()
 
-nrt_freqshift = nrt_freqshift_factory.build()
-rt_freqshift = rt_freqshift_factory.build()
+nrt_freqshift = nrt_freqshift_factory.build(name='freqshift')
+rt_freqshift = rt_freqshift_factory.build(name='freqshift')
 
 __all__ = (
     'nrt_freqshift',

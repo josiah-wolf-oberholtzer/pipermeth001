@@ -26,7 +26,7 @@ factory = factory.with_signal_block(signal_block)
 nrt_lpf_dip_factory = factory.with_output(
     crossfaded=True, leveled=True, windowed=True)
 
-nrt_lpf_dip = nrt_lpf_dip_factory.build()
+nrt_lpf_dip = nrt_lpf_dip_factory.build(name='lpf_dip')
 
 __all__ = (
     'nrt_lpf_dip',

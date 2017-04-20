@@ -67,7 +67,7 @@ factory = factory.with_input()
 factory = factory.with_signal_block(signal_block)
 factory = factory.with_output()
 
-multiband_compressor = factory.build()
+multiband_compressor = factory.build(name='compressor')
 
 __all__ = (
     'multiband_compressor',

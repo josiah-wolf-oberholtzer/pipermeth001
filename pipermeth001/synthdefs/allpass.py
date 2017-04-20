@@ -78,8 +78,8 @@ rt_allpass_factory = factory \
     .with_output(crossfaded=True) \
     .with_silence_detection()
 
-nrt_allpass = nrt_allpass_factory.build()
-rt_allpass = rt_allpass_factory.build()
+nrt_allpass = nrt_allpass_factory.build(name='allpass')
+rt_allpass = rt_allpass_factory.build(name='allpass')
 
 __all__ = (
     'nrt_allpass',

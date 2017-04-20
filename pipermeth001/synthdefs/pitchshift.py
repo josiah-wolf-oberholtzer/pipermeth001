@@ -72,8 +72,8 @@ rt_pitchshift_factory = factory \
     .with_output(crossfaded=True) \
     .with_silence_detection()
 
-nrt_pitchshift = nrt_pitchshift_factory.build()
-rt_pitchshift = rt_pitchshift_factory.build()
+nrt_pitchshift = nrt_pitchshift_factory.build(name='pitchshift')
+rt_pitchshift = rt_pitchshift_factory.build(name='pitchshift')
 
 __all__ = (
     'nrt_pitchshift',

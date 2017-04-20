@@ -94,7 +94,7 @@ warp_buffer_player_factory = synthdeftools.SynthDefFactory(
     .with_output() \
     .with_signal_block(signal_block)
 
-warp_buffer_player = warp_buffer_player_factory.build()
+warp_buffer_player = warp_buffer_player_factory.build(name='warp')
 
 __all__ = [
     'warp_buffer_player',

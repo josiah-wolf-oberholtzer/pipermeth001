@@ -76,8 +76,8 @@ nrt_greyout_factory = factory.with_output(
 rt_greyout_factory = factory \
     .with_output(crossfaded=True)
 
-nrt_greyout = nrt_greyout_factory.build()
-rt_greyout = rt_greyout_factory.build()
+nrt_greyout = nrt_greyout_factory.build(name='greyout')
+rt_greyout = rt_greyout_factory.build(name='greyout')
 
 __all__ = (
     'nrt_greyout',

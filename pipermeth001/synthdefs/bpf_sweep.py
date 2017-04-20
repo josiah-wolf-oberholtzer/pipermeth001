@@ -37,7 +37,7 @@ factory = factory.with_signal_block(signal_block)
 nrt_bpf_sweep_factory = factory.with_output(
     crossfaded=True, leveled=True, windowed=True)
 
-nrt_bpf_sweep = nrt_bpf_sweep_factory.build()
+nrt_bpf_sweep = nrt_bpf_sweep_factory.build(name='bpf_sweep')
 
 __all__ = (
     'nrt_bpf_sweep',

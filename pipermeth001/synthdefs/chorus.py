@@ -107,8 +107,8 @@ rt_chorus_factory = factory \
     .with_output(crossfaded=True) \
     .with_silence_detection()
 
-nrt_chorus = nrt_chorus_factory.build()
-rt_chorus = rt_chorus_factory.build()
+nrt_chorus = nrt_chorus_factory.build(name='chorus')
+rt_chorus = rt_chorus_factory.build(name='chorus')
 
 __all__ = (
     'nrt_chorus',

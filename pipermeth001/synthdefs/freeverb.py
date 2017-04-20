@@ -69,8 +69,8 @@ rt_freeverb_factory = factory \
     .with_output(crossfaded=True) \
     .with_silence_detection()
 
-nrt_freeverb = nrt_freeverb_factory.build()
-rt_freeverb = rt_freeverb_factory.build()
+nrt_freeverb = nrt_freeverb_factory.build(name='freeverb')
+rt_freeverb = rt_freeverb_factory.build(name='freeverb')
 
 __all__ = (
     'nrt_freeverb',

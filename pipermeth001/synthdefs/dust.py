@@ -34,6 +34,6 @@ factory = synthdeftools.SynthDefFactory(density=10, gain=0)
 factory = factory.with_signal_block(signal_block)
 factory = factory.with_output(windowed=True)
 
-nrt_dust = factory.build()
+nrt_dust = factory.build(name='dust')
 
 __all__ = ['nrt_dust']

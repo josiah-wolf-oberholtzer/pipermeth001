@@ -41,14 +41,13 @@ dust_pattern = patterntools.Pbind(
 
 warp_buffer_player_pattern = patterntools.Pbind(
     synthdef=patterntools.Prand([
-        synthdefs.warp_buffer_player_factory.build(iterations=4),
-        synthdefs.warp_buffer_player_factory.build(iterations=2),
-        #synthdefs.warp_buffer_player_factory.build(iterations=1),
+        synthdefs.warp_buffer_player_factory.build(name='warp4', iterations=4),
+        synthdefs.warp_buffer_player_factory.build(name='warp2', iterations=2),
         ], repetitions=None),
     add_action=AddAction.ADD_TO_HEAD,
     buffer_id=patterntools.Prand(buffers, repetitions=None),
-    delta=patterntools.Pwhite(0, 60),
-    duration=patterntools.Pwhite(30, 60),
+    delta=patterntools.Pwhite(0, 30),
+    duration=patterntools.Pwhite(15, 25),
     direction=patterntools.Prand([-1, 1], repetitions=None),
     gain=patterntools.Pwhite(-18, -12),
     overlaps=patterntools.Prand(
@@ -226,7 +225,7 @@ global_pattern = global_pattern.with_bus(release_time=release_time)
 
 ### RENDER ###
 
-minutes = 2
+minutes = 1.5
 iterations = 1
 for i in range(iterations):
     with session.at(i * 10):
@@ -252,7 +251,7 @@ friends = session
 
 #import pprint
 #pprint.pprint(session.to_lists())
-print(session.to_strings())
+print(session.to_strings(include_timespans=True))
 
 """
 Something funny is happening in NRT compilation.
