@@ -72,10 +72,6 @@ def signal_block(builder, source, state):
     source = ugentools.Mix.multichannel(source, state['channel_count'])
     source *= builder['gain'].db_to_amplitude()
     source *= state['buffer_window']
-    source *= ugentools.Line.kr(
-        done_action=2,
-        duration=builder['duration'],
-        ).hanning_window()
     if iterations > 1:
         source /= iterations
     return source
@@ -85,7 +81,6 @@ warp_buffer_player_factory = synthdeftools.SynthDefFactory(
     buffer_id=0,
     channel_count=2,
     direction=1,
-    duration=60,  # hack to get around zero-duration NRT weirdness
     gain=0,
     overlaps=32,
     rate=1,

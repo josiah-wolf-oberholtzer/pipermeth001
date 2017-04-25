@@ -19,7 +19,6 @@ for voice in ['Daniel', 'Fiona', 'Victoria', 'Tessa', 'Karen', 'Thomas']:
         ]:
         says.append(Say(text, voice=voice))
 
-says = [Say('Be true.', voice='Daniel')]
 buffers = []
 with session.at(0):
     for say in says:
@@ -47,7 +46,7 @@ warp_buffer_player_pattern = patterntools.Pbind(
     add_action=AddAction.ADD_TO_HEAD,
     buffer_id=patterntools.Prand(buffers, repetitions=None),
     delta=patterntools.Pwhite(0, 30),
-    duration=patterntools.Pwhite(15, 25),
+    duration=0,
     direction=patterntools.Prand([-1, 1], repetitions=None),
     gain=patterntools.Pwhite(-18, -12),
     overlaps=patterntools.Prand(
@@ -181,7 +180,7 @@ compressor_parameters = dict(
     )
 
 source_pattern = patterntools.Ppar([
-    dust_pattern,
+    #dust_pattern,
     warp_buffer_player_pattern,
     ])
 source_pattern = source_pattern.with_group(release_time=release_time)
@@ -225,7 +224,7 @@ global_pattern = global_pattern.with_bus(release_time=release_time)
 
 ### RENDER ###
 
-minutes = 1.5
+minutes = 6
 iterations = 1
 for i in range(iterations):
     with session.at(i * 10):
