@@ -56,20 +56,7 @@ warp_buffer_player_pattern = patterntools.Pbind(
     transpose=patterntools.Pwhite(-12.0, 12.0),
     )
 
-#### OVERRIDES ###
-#
-#dust_pattern = patterntools.Pbindf(
-#    dust_pattern,
-#    duration=40,
-#    delta=15,
-#    )
-#warp_buffer_player_pattern = patterntools.Pbindf(
-#    warp_buffer_player_pattern,
-#    duration=32,
-#    delta=16,
-#    )
-
-### FX PATTERN ###
+### FX PATTERN BASE ###
 
 fx_pattern = patterntools.Pbind(
     add_action=AddAction.ADD_TO_TAIL,
@@ -163,34 +150,36 @@ pitchshift_pattern = patterntools.Pbindf(
     window_size=patterntools.Pwhite(0.1, 2.0),
     )
 
-### PATTERN ###
+### MAIN PATTERN ###
 
 release_time = 15
 
 compressor_parameters = dict(
+    pregain=3,
     band_1_threshold=-12,
     band_2_threshold=-12,
     band_3_threshold=-12,
-    band_4_threshold=-12,
-    band_5_threshold=-15,
-    band_6_threshold=-18,
-    band_7_threshold=-21,
-    band_8_threshold=-24,
+    band_4_threshold=-15,
+    band_5_threshold=-18,
+    band_6_threshold=-24,
+    band_7_threshold=-30,
+    band_8_threshold=-36,
+    band_1_slope_above=0.75,
+    band_2_slope_above=0.75,
+    band_3_slope_above=0.75,
+    band_4_slope_above=0.75,
+    band_5_slope_above=0.75,
+    band_6_slope_above=0.75,
+    band_7_slope_above=0.75,
+    band_8_slope_above=0.75,
     limiter_lookahead=5,
     )
 
-source_pattern = patterntools.Ppar([
-    #dust_pattern,
+source_patterns = [
     warp_buffer_player_pattern,
-    ])
-source_pattern = source_pattern.with_group(release_time=release_time)
-source_pattern = source_pattern.with_effect(
-    synthdefs.multiband_compressor,
-    release_time=release_time,
-    **compressor_parameters
-    )
+    ]
 
-effect_pattern = patterntools.Ppar([
+effect_patterns = [
     allpass_pattern,
     chorus_pattern,
     freeverb_pattern,
@@ -199,33 +188,20 @@ effect_pattern = patterntools.Ppar([
     pitchshift_pattern,
     bpf_sweep_pattern,
     lpf_dip_pattern,
-    ])
-effect_pattern = effect_pattern.with_group(release_time=release_time)
-effect_pattern = effect_pattern.with_effect(
-    synthdefs.multiband_compressor,
+    ]
+
+global_pattern = patterntools.Pgfxpar(
+    [source_patterns, effect_patterns],
+    synthdef=synthdefs.multiband_compressor,
     release_time=release_time,
-    pregain=12,
-    band_1_slope_above=3 / 4,
-    band_2_slope_above=3 / 4,
-    band_3_slope_above=3 / 4,
-    band_4_slope_above=3 / 4,
-    band_5_slope_above=3 / 4,
-    band_6_slope_above=3 / 4,
-    band_7_slope_above=3 / 4,
-    band_8_slope_above=3 / 4,
     **compressor_parameters
     )
-
-global_pattern = patterntools.Pgpar([
-    source_pattern,
-    effect_pattern,
-    ], release_time=release_time)
 global_pattern = global_pattern.with_bus(release_time=release_time)
 
 ### RENDER ###
 
-minutes = 6
-iterations = 1
+minutes = 20
+iterations = 3
 for i in range(iterations):
     with session.at(i * 10):
         session.inscribe(global_pattern, duration=60 * minutes, seed=i)
@@ -234,23 +210,14 @@ with session.at(0):
     session.add_synth(
         synthdef=synthdefs.multiband_compressor,
         add_action='ADD_TO_TAIL',
-        pregain=0,
-        band_1_threshold=-12,
-        band_2_threshold=-12,
-        band_3_threshold=-12,
-        band_4_threshold=-12,
-        band_5_threshold=-12,
-        band_6_threshold=-12,
-        band_7_threshold=-12,
-        band_8_threshold=-12,
-        limiter_lookahead=5,
+        **compressor_parameters
         )
 
 friends = session
 
 #import pprint
-#pprint.pprint(session.to_lists())
-print(session.to_strings(include_timespans=True))
+#pprint.pprint(session.to_lists(), width=200)
+#print(session.to_strings(include_timespans=True))
 
 """
 Something funny is happening in NRT compilation.
@@ -263,16 +230,9 @@ Something funny is happening in NRT compilation.
   - The extra mappings hold the node hierarchy before culling stop nodes (which
     includes zero-duration nodes).
   - When cloning, use the post-cull hierarchy mappings.
-- Sometimes, usually near the end of an NRT session, I see /g_head commands.
-  - It appears that groups are ending early, and their contents are being
-    ejected, often out-of-order into the group's parent. This causes fade-outs
-    to not happen properly, amongst other problems.
-- Pattern-created groups should probably ~split-and-delete~ nodes which extend
-  beyond them.
-- Additionally, add in support for displaying the non-md5 names of synths in
-  NRT Session.to_strings(). This will make debugging a lot simpler.
-  - What is that steady-repetition click, approx 0.5 seconds in cycle? Seeing
-    the synth names will help ID it.
+- Is the last non-infinite state properly desparsified?
+  - Maybe an artifact from the split&delete changes in Node.set_duration().
+- Looks like node settings don't count against sparseness.
 
 """
 
