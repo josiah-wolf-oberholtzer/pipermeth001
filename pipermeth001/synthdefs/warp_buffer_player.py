@@ -57,7 +57,7 @@ def signal_block(builder, source, state):
     if state['channel_count'] > 1:
         position = ugentools.LFNoise1.kr(
             frequency=[0.05] * iterations,
-            )
+            ) ** 0.5
         if state['channel_count'] > 2:
             source = ugentools.PanAz.ar(
                 channel_count=state['channel_count'],

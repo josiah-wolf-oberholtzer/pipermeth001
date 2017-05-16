@@ -15,8 +15,9 @@ def signal_block_pre(builder, source, state):
 def signal_block(builder, source, state):
     allpasses = []
     maximum_delay = ugentools.Rand.ir(0.1, 1)
+    iterations = state.get('iterations') or 3
     for output in source:
-        for _ in range(3):
+        for _ in range(iterations):
             output = ugentools.AllpassC.ar(
                 decay_time=ugentools.LFDNoise3.kr(
                     frequency=ugentools.ExpRand.ir(0.01, 0.1),
