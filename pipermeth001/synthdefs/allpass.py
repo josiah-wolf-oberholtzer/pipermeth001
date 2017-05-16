@@ -73,7 +73,8 @@ factory = factory.with_signal_block(signal_block_post)
 factory = factory.with_feedback_loop(feedback_loop)
 
 nrt_allpass_factory = factory \
-    .with_output(crossfaded=True, leveled=True, windowed=True)
+    .with_output(crossfaded=True, leveled=True, windowed=True) \
+    .with_rand_id()
 
 rt_allpass_factory = factory \
     .with_gate() \

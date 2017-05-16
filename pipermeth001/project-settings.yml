@@ -5,7 +5,7 @@ composer:
     website: https://www.josiahwolfoberholtzer.com
 server_options:
     audio_bus_channel_count: 128
-    block_size: 1
+    block_size: 128
     buffer_count: 1024
     control_bus_channel_count: 4096
     hardware_buffer_size: null
@@ -25,7 +25,7 @@ server_options:
     random_number_generator_count: 64
     remote_control_volume: false
     restricted_path: null
-    sample_rate: 96000
+    sample_rate: 44100
     verbosity: 0
     wire_buffer_count: 1024
     zero_configuration: false

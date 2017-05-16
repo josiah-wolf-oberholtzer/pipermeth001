@@ -38,7 +38,7 @@ def feedback_loop(builder, source, state):
     source *= -1
     source = ugentools.Limiter.ar(
         source=source,
-        level=ugentools.DC.kr(-6).db_to_amplitude(),
+        level=ugentools.DC.kr(-3).db_to_amplitude(),
         )
     source = ugentools.DelayC.ar(
         source=source,
@@ -63,7 +63,8 @@ factory = factory.with_signal_block(signal_block_post)
 factory = factory.with_feedback_loop(feedback_loop)
 
 nrt_freeverb_factory = factory \
-    .with_output(crossfaded=True, leveled=True, windowed=True)
+    .with_output(crossfaded=True, leveled=True, windowed=True) \
+    .with_rand_id()
 
 rt_freeverb_factory = factory \
     .with_gate() \

@@ -57,7 +57,7 @@ def signal_block(builder, source, state):
     if state['channel_count'] > 1:
         position = ugentools.LFNoise1.kr(
             frequency=[0.05] * iterations,
-            ) ** 0.5
+            )
         if state['channel_count'] > 2:
             source = ugentools.PanAz.ar(
                 channel_count=state['channel_count'],
@@ -66,7 +66,7 @@ def signal_block(builder, source, state):
                 )
         else:
             source = ugentools.Pan2.ar(
-                position=position,
+                position=position ** 0.25,
                 source=source,
                 )
     source = ugentools.Mix.multichannel(source, state['channel_count'])
@@ -86,8 +86,9 @@ warp_buffer_player_factory = synthdeftools.SynthDefFactory(
     rate=1,
     transpose=0,
     ) \
-    .with_output() \
-    .with_signal_block(signal_block)
+    .with_signal_block(signal_block) \
+    .with_rand_id() \
+    .with_output()
 
 warp_buffer_player = warp_buffer_player_factory.build(name='warp')
 

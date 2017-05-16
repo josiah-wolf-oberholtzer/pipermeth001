@@ -29,7 +29,6 @@ with session.at(0):
 
 warp_buffer_player_pattern = patterntools.Pbind(
     synthdef=patterntools.Prand([
-        #synthdefs.warp_buffer_player_factory.build(name='warp2', iterations=1),
         synthdefs.warp_buffer_player_factory.build(name='warp2', iterations=2),
         synthdefs.warp_buffer_player_factory.build(name='warp4', iterations=4),
         synthdefs.warp_buffer_player_factory.build(name='warp8', iterations=8),
@@ -44,7 +43,8 @@ warp_buffer_player_pattern = patterntools.Pbind(
         [1, 2, 4, 8, 8, 16, 16, 16, 32, 32, 32] * 4,
         repetitions=None),
     rate=patterntools.Pwhite(4, 128),
-    transpose=patterntools.Pwhite(-12.0, 12.0),
+    #transpose=patterntools.Pwhite(-12.0, 12.0),
+    transpose=patterntools.Pwhite(0.0, 24.0),
     )
 
 ### FX PATTERN BASE ###
@@ -53,7 +53,7 @@ fx_pattern = patterntools.Pbind(
     add_action=AddAction.ADD_TO_TAIL,
     delta=patterntools.Pwhite(15, 60),
     duration=patterntools.Pwhite(30, 90),
-    level=patterntools.Pwhite(0.333, 0.667),
+    level=patterntools.Pwhite(0.25, 1.0),
     )
 
 ### ALLPASS ###
@@ -218,7 +218,7 @@ global_pattern = patterntools.Pgpar(
 
 ### RENDER ###
 
-minutes = 20
+minutes = 10
 iterations = 5
 for i in range(iterations):
     with session.at(i * 10):
@@ -240,6 +240,7 @@ with session.at(0):
         band_8_slope_above=0.75,
         **compressor_parameters
         )
+    session.set_rand_seed()
 
 friends = session
 

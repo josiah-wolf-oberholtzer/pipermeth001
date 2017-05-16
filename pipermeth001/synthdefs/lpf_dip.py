@@ -23,8 +23,9 @@ factory = synthdeftools.SynthDefFactory(
 factory = factory.with_input()
 factory = factory.with_signal_block(signal_block)
 
-nrt_lpf_dip_factory = factory.with_output(
-    crossfaded=True, leveled=True, windowed=True)
+nrt_lpf_dip_factory = factory \
+    .with_output(crossfaded=True, leveled=True, windowed=True) \
+    .with_rand_id()
 
 nrt_lpf_dip = nrt_lpf_dip_factory.build(name='lpf_dip')
 

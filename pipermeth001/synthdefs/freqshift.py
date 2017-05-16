@@ -20,8 +20,9 @@ factory = synthdeftools.SynthDefFactory(channel_count=2, sign=1)
 factory = factory.with_input()
 factory = factory.with_signal_block(signal_block)
 
-nrt_freqshift_factory = factory.with_output(
-    crossfaded=True, leveled=True, windowed=True)
+nrt_freqshift_factory = factory \
+    .with_output(crossfaded=True, leveled=True, windowed=True) \
+    .with_rand_id()
 
 rt_freqshift_factory = factory \
     .with_gate() \
