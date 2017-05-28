@@ -1,163 +1,170 @@
 # -*- encoding: utf-8 -*-
 import supriya
 from pipermeth001 import project_settings, synthdefs
+from pipermeth001.materials import compressor_settings
 
 
-### SESSION SETUP ###
+class SessionFactory(supriya.nonrealtimetools.SessionFactory):
 
-session = supriya.Session.from_project_settings(project_settings)
+    ### GLOBALS ###
 
-release_time = 15
+    layer_count = 4
+    minutes = 5
+    release_time = 15
 
-compressor_parameters = dict(
-    band_1_threshold=-12,
-    band_2_threshold=-12,
-    band_3_threshold=-12,
-    band_4_threshold=-15,
-    band_5_threshold=-18,
-    band_6_threshold=-24,
-    band_7_threshold=-30,
-    band_8_threshold=-36,
-    band_1_slope_above=0.75,
-    band_2_slope_above=0.75,
-    band_3_slope_above=0.75,
-    band_4_slope_above=0.75,
-    band_5_slope_above=0.75,
-    band_6_slope_above=0.75,
-    band_7_slope_above=0.75,
-    band_8_slope_above=0.75,
-    )
+    ### SESSION ###
 
-### NOISE WASH PATTERN ###
+    def __session__(self):
+        session = supriya.Session(
+            input_bus_channel_count=self.input_bus_channel_count,
+            output_bus_channel_count=self.output_bus_channel_count,
+            )
+        for i in range(self.layer_count):
+            with session.at(i * 10):
+                session.inscribe(
+                    self.global_pattern,
+                    duration=60 * self.minutes,
+                    seed=i,
+                    )
+        with session.at(0):
+            session.add_synth(
+                synthdef=synthdefs.multiband_compressor,
+                add_action='ADD_TO_TAIL',
+                duration=session.duration + self.release_time,
+                pregain=0,
+                **compressor_settings
+                )
+            session.set_rand_seed()
+        return session
 
-noise_wash_pattern = supriya.patterntools.Pbind(
-    synthdef=synthdefs.nrt_noise_wash,
-    delta=supriya.patterntools.Pwhite(15, 30),
-    duration=supriya.patterntools.Pwhite(15, 60),
-    gain=supriya.patterntools.Pwhite(-24, -12),
-    )
+    ### GLOBAL PATTERN ###
 
-### FX PATTERN BASE ###
+    @property
+    def global_pattern(self):
+        global_pattern = supriya.patterntools.Pgpar(
+            [
+                self.source_pattern,
+                self.effect_pattern,
+                ],
+            release_time=self.release_time,
+            )
+        global_pattern = global_pattern.with_bus(
+            release_time=self.release_time)
+        return global_pattern
 
-fx_pattern = supriya.patterntools.Pbind(
-    add_action=supriya.AddAction.ADD_TO_TAIL,
-    delta=supriya.patterntools.Pwhite(15, 30),
-    duration=supriya.patterntools.Pwhite(30, 90),
-    level=supriya.patterntools.Pwhite(0.25, 1.0),
-    )
+    ### SOURCE PATTERNS ###
 
-### ALLPASS ###
+    @property
+    def noise_wash_pattern(self):
+        return supriya.patterntools.Pbind(
+            synthdef=synthdefs.nrt_noise_wash,
+            delta=supriya.patterntools.Pwhite(15, 30),
+            duration=supriya.patterntools.Pwhite(15, 60),
+            gain=supriya.patterntools.Pwhite(-24, -12),
+            )
 
-allpass_pattern = supriya.patterntools.Pbindf(
-    fx_pattern,
-    synthdef=synthdefs.nrt_allpass,
-    gain=3,
-    )
+    @property
+    def pitchshift_pattern(self):
+        return supriya.patterntools.Pbindf(
+            self.fx_pattern,
+            gain=6,
+            pitch_dispersion=supriya.patterntools.Pwhite(0., 0.02),
+            pitch_shift=supriya.patterntools.Pwhite(-12.0, 12.0),
+            synthdef=synthdefs.nrt_pitchshift,
+            time_dispersion=supriya.patterntools.Pwhite(),
+            window_size=supriya.patterntools.Pwhite(0.1, 2.0),
+            )
 
-### CHORUS ###
+    @property
+    def source_pattern(self):
+        source_pattern = supriya.patterntools.Ppar([self.noise_wash_pattern])
+        source_pattern = source_pattern.with_group(
+            release_time=self.release_time)
+        source_pattern = source_pattern.with_effect(
+            synthdef=synthdefs.multiband_compressor,
+            release_time=self.release_time,
+            pregain=12,
+            **compressor_settings
+            )
+        return source_pattern
 
-chorus_pattern = supriya.patterntools.Pbindf(
-    fx_pattern,
-    level=1.0,
-    synthdef=supriya.patterntools.Pseq([
-        synthdefs.nrt_chorus_factory.build(name='chorus2', iterations=2),
-        synthdefs.nrt_chorus_factory.build(name='chorus4', iterations=4),
-        synthdefs.nrt_chorus_factory.build(name='chorus8', iterations=8),
-        ], None),
-    gain=3,
-    )
+    ### EFFECT PATTERNS ###
 
-### FREEVERB ###
+    @property
+    def allpass_pattern(self):
+        return supriya.patterntools.Pbindf(
+            self.fx_pattern,
+            synthdef=synthdefs.nrt_allpass,
+            gain=3,
+            )
 
-freeverb_pattern = supriya.patterntools.Pbindf(
-    fx_pattern,
-    synthdef=synthdefs.nrt_freeverb,
-    damping=supriya.patterntools.Pwhite(),
-    gain=3,
-    room_size=supriya.patterntools.Pwhite(),
-    )
+    @property
+    def chorus_pattern(self):
+        choruses = [
+            synthdefs.nrt_chorus_factory.build(name='chorus2', iterations=2),
+            synthdefs.nrt_chorus_factory.build(name='chorus4', iterations=4),
+            synthdefs.nrt_chorus_factory.build(name='chorus8', iterations=8),
+            ]
+        return supriya.patterntools.Pbindf(
+            self.fx_pattern,
+            level=1.0,
+            synthdef=supriya.patterntools.Pseq(choruses, None),
+            gain=3,
+            )
 
-### FREQSHIFT ###
+    @property
+    def effect_pattern(self):
+        effect_pattern = supriya.patterntools.Pgpar(
+            [
+                [
+                    self.allpass_pattern,
+                    self.chorus_pattern,
+                    self.freeverb_pattern,
+                    self.freqshift_pattern,
+                    self.pitchshift_pattern,
+                    self.allpass_pattern,
+                    ],
+                ],
+            release_time=self.release_time,
+            )
+        effect_pattern = effect_pattern.with_group(
+            release_time=self.release_time)
+        effect_pattern = effect_pattern.with_effect(
+            synthdef=synthdefs.multiband_compressor,
+            release_time=self.release_time,
+            pregain=0,
+            **compressor_settings
+            )
+        return effect_pattern
 
-freqshift_pattern = supriya.patterntools.Pbindf(
-    fx_pattern,
-    gain=6,
-    level=supriya.patterntools.Pwhite(0.5, 1.0),
-    sign=supriya.patterntools.Prand([-1, 1]),
-    synthdef=synthdefs.nrt_freqshift,
-    )
+    @property
+    def freeverb_pattern(self):
+        return supriya.patterntools.Pbindf(
+            self.fx_pattern,
+            synthdef=synthdefs.nrt_freeverb,
+            damping=supriya.patterntools.Pwhite(),
+            gain=3,
+            room_size=supriya.patterntools.Pwhite(),
+            )
 
-### PITCHSHIFT ###
+    @property
+    def freqshift_pattern(self):
+        return supriya.patterntools.Pbindf(
+            self.fx_pattern,
+            gain=6,
+            level=supriya.patterntools.Pwhite(0.5, 1.0),
+            sign=supriya.patterntools.Prand([-1, 1]),
+            synthdef=synthdefs.nrt_freqshift,
+            )
 
-pitchshift_pattern = supriya.patterntools.Pbindf(
-    fx_pattern,
-    gain=6,
-    pitch_dispersion=supriya.patterntools.Pwhite(0., 0.02),
-    pitch_shift=supriya.patterntools.Pwhite(-12.0, 12.0),
-    synthdef=synthdefs.nrt_pitchshift,
-    time_dispersion=supriya.patterntools.Pwhite(),
-    window_size=supriya.patterntools.Pwhite(0.1, 2.0),
-    )
+    @property
+    def fx_pattern(self):
+        return supriya.patterntools.Pbind(
+            add_action=supriya.AddAction.ADD_TO_TAIL,
+            delta=supriya.patterntools.Pwhite(15, 30),
+            duration=supriya.patterntools.Pwhite(30, 90),
+            level=supriya.patterntools.Pwhite(0.25, 1.0),
+            )
 
-### SOURCE PATTERN ###
 
-source_pattern = supriya.patterntools.Ppar([noise_wash_pattern])
-source_pattern = source_pattern.with_group(release_time=release_time)
-source_pattern = source_pattern.with_effect(
-    synthdef=synthdefs.multiband_compressor,
-    release_time=release_time,
-    pregain=12,
-    **compressor_parameters
-    )
-
-### EFFECT PATTERN ###
-
-effect_pattern = supriya.patterntools.Pgpar(
-    [
-        [
-            allpass_pattern,
-            chorus_pattern,
-            freeverb_pattern,
-            freqshift_pattern,
-            pitchshift_pattern,
-            allpass_pattern,
-            ],
-        ],
-    release_time=release_time,
-    )
-effect_pattern = effect_pattern.with_group(release_time=release_time)
-effect_pattern = effect_pattern.with_effect(
-    synthdef=synthdefs.multiband_compressor,
-    release_time=release_time,
-    pregain=0,
-    **compressor_parameters
-    )
-
-### GLOBAL PATTERN ###
-
-global_pattern = supriya.patterntools.Pgpar(
-    [source_pattern, effect_pattern],
-    release_time=release_time,
-    )
-global_pattern = global_pattern.with_bus(release_time=release_time)
-
-### RENDER ###
-
-minutes = 5
-iterations = 4
-for i in range(iterations):
-    with session.at(i * 10):
-        session.inscribe(global_pattern, duration=60 * minutes, seed=i)
-
-with session.at(0):
-    session.add_synth(
-        synthdef=synthdefs.multiband_compressor,
-        add_action='ADD_TO_TAIL',
-        duration=session.duration + release_time,
-        pregain=0,
-        **compressor_parameters
-        )
-    session.set_rand_seed()
-
-noise_wash = session
-__all__ = ['noise_wash']
+session = SessionFactory.from_project_settings(project_settings)
