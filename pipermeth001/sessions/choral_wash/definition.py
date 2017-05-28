@@ -1,6 +1,25 @@
 # -*- encoding: utf-8 -*-
-from supriya import AddAction, Say, Session, patterntools
+"""
+Something funny is happening in NRT compilation.
+
+- Zero-duration events aren't being handled properly.
+  - They don't appear in NRT Session.to_strings(). The states just aren't
+    there.
+  - Investigate adding a second pair of node:children and node:parent mappings
+    in nonrealtimetools.State.
+  - The extra mappings hold the node hierarchy before culling stop nodes (which
+    includes zero-duration nodes).
+  - When cloning, use the post-cull hierarchy mappings.
+- Is the last non-infinite state properly desparsified?
+  - Maybe an artifact from the split&delete changes in Node.set_duration().
+- Looks like node settings don't count against sparseness.
+"""
+from supriya import AddAction, Session, patterntools
 from pipermeth001 import project_settings, synthdefs
+from pipermeth001.materials import (
+    libretto_x,
+    compressor_settings,
+    )
 
 ### SESSION SETUP ###
 
@@ -8,46 +27,15 @@ session = Session.from_project_settings(project_settings)
 
 release_time = 15
 
-minutes = 20
+minutes = 3
 
-layer_count = 4
-
-compressor_parameters = dict(
-    band_1_threshold=-18,
-    band_2_threshold=-15,
-    band_3_threshold=-12,
-    band_4_threshold=-15,
-    band_5_threshold=-18,
-    band_6_threshold=-24,
-    band_7_threshold=-30,
-    band_8_threshold=-36,
-    band_1_slope_above=0.75,
-    band_2_slope_above=0.75,
-    band_3_slope_above=0.75,
-    band_4_slope_above=0.75,
-    band_5_slope_above=0.75,
-    band_6_slope_above=0.75,
-    band_7_slope_above=0.75,
-    band_8_slope_above=0.75,
-    limiter_lookahead=0.5,
-    )
+layer_count = 2
 
 ### BUFFERS ###
 
-says = []
-for voice in ['Daniel', 'Fiona', 'Victoria', 'Tessa', 'Karen', 'Thomas']:
-    for text in [
-        'Be true.', "Don't leave me.", 'Talk to me.',
-        'Feed me.', 'Heal me.', 'Dance with me.', 'Teach me.',
-        'Hold me.', 'Touch me.', 'Love me.',
-        'Let me help you.', "Don't hurt me.",
-        'Show me a path.', 'Give me light.', 'Release me.',
-        ]:
-        says.append(Say(text, voice=voice))
-
 buffers = []
 with session.at(0):
-    for say in says:
+    for say in libretto_x:
         buffer_ = session.add_buffer(channel_count=1, file_path=say)
         buffers.append(buffer_)
 
@@ -173,7 +161,7 @@ source_pattern = source_pattern.with_effect(
     synthdef=synthdefs.multiband_compressor,
     release_time=release_time,
     pregain=12,
-    **compressor_parameters
+    **compressor_settings
     )
 
 ### EFFECT PATTERN ###
@@ -193,7 +181,7 @@ effect_pattern = effect_pattern.with_effect(
     synthdef=synthdefs.multiband_compressor,
     release_time=release_time,
     pregain=6,
-    **compressor_parameters
+    **compressor_settings
     )
 
 ### GLOBAL PATTERN ###
@@ -219,32 +207,7 @@ with session.at(0):
         add_action='ADD_TO_TAIL',
         duration=session.duration + release_time,
         pregain=-6,
-        **compressor_parameters
+        **compressor_settings
         )
 
 session.set_rand_seed(offset=0)
-
-choral_wash = session
-
-#import pprint
-#pprint.pprint(session.to_lists(), width=200)
-#print(session.to_strings(include_timespans=True))
-
-"""
-Something funny is happening in NRT compilation.
-
-- Zero-duration events aren't being handled properly.
-  - They don't appear in NRT Session.to_strings(). The states just aren't
-    there.
-  - Investigate adding a second pair of node:children and node:parent mappings
-    in nonrealtimetools.State.
-  - The extra mappings hold the node hierarchy before culling stop nodes (which
-    includes zero-duration nodes).
-  - When cloning, use the post-cull hierarchy mappings.
-- Is the last non-infinite state properly desparsified?
-  - Maybe an artifact from the split&delete changes in Node.set_duration().
-- Looks like node settings don't count against sparseness.
-
-"""
-
-__all__ = ['choral_wash']
