@@ -14,17 +14,18 @@ def signal_block_pre(builder, source, state):
 
 def signal_block(builder, source, state):
     allpasses = []
-    maximum_delay = ugentools.Rand.ir(0.1, 1)
+    #maximum_delay = ugentools.Rand.ir(0.1, 1)
+    maximum_delay = 1
     iterations = state.get('iterations') or 3
     for output in source:
         for _ in range(iterations):
             output = ugentools.AllpassC.ar(
                 decay_time=ugentools.LFDNoise3.kr(
                     frequency=ugentools.ExpRand.ir(0.01, 0.1),
-                    ).scale(-1, 1, 0.001, 1),
+                    ).scale(-1, 1, 0.01, 1),
                 delay_time=ugentools.LFDNoise3.kr(
                     frequency=ugentools.ExpRand.ir(0.01, 0.1),
-                    ).scale(-1, 1, 0.001, 1) * maximum_delay,
+                    ).scale(-1, 1, 0.01, 1, exponential=True),
                 maximum_delay_time=maximum_delay,
                 source=output,
                 )
@@ -47,18 +48,7 @@ def feedback_loop(builder, source, state):
     if len(source) > 1:
         source = synthdeftools.UGenArray((source[-1],) + source[:-1])
     source *= ugentools.LFNoise1.kr(frequency=0.05).squared().s_curve()
-    source *= -0.95
-    source = ugentools.HPF.ar(
-        source=source,
-        frequency=250,
-        )
-    source = ugentools.DelayC.ar(
-        source=source,
-        delay_time=ugentools.LFNoise1.kr(
-            frequency=0.05,
-            ).scale(-1, 1, 0.1, 0.2),
-        maximum_delay_time=0.2,
-        )
+    source *= -0.99
     return source
 
 

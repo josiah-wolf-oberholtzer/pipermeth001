@@ -12,52 +12,26 @@ def signal_block_pre(builder, source, state):
     return source
 
 
-def iteration_block(source, state):
-    channel_count = state['channel_count']
-    maximum_delay_time = 0.01
-    for _ in range(2):
-        decay_time = ugentools.ExpRand.ir(
-            minimum=[0.001] * channel_count,
-            maximum=[maximum_delay_time * 2] * channel_count,
-            )
-        delay_time = ugentools.LFNoise2.kr(
-            frequency=ugentools.ExpRand.ir(
-                minimum=[0.1] * channel_count,
-                maximum=[5.0] * channel_count,
-                ),
-            ).squared() * maximum_delay_time
-        source = ugentools.AllpassC.ar(
-            decay_time=decay_time,
-            delay_time=delay_time,
-            maximum_delay_time=maximum_delay_time,
-            source=source,
-            )
-        assert len(decay_time) == channel_count
-        assert len(delay_time) == channel_count
-        assert len(source) == channel_count
-    return source
-
-
 def signal_block(builder, source, state):
-    allpasses = []
-    iterations = 16
-    crossover_frequency = 500
-    lows = ugentools.LPF.ar(
-        source=source,
-        frequency=crossover_frequency,
-        )
-    highs = ugentools.HPF.ar(
-        source=source,
-        frequency=crossover_frequency,
-        )
-    for i in range(iterations):
-        allpass = iteration_block(highs, state)
-        if i % 2:
-            allpass *= -1
-        allpasses.extend(allpass)
-    source = ugentools.Mix.multichannel(allpasses, state['channel_count'])
-    source *= 1. / iterations
-    source += lows
+    stage_iterations = 3
+    inner_iterations = 4
+    channel_count = state['channel_count']
+    frequency = [builder['frequency']] * channel_count
+    assert len(frequency) == channel_count
+    for _ in range(stage_iterations):
+        all_delays = []
+        delay = source
+        for i in range(inner_iterations):
+            delay_time = ugentools.LFNoise2.kr(frequency=frequency)
+            delay_time = delay_time.scale(-1, 1, 0.0001, 0.01)
+            delay = ugentools.DelayC.ar(
+                delay_time=delay_time,
+                maximum_delay_time=0.1,
+                source=delay,
+                )
+            all_delays.extend(delay)
+        source = ugentools.Mix.multichannel(all_delays, state['channel_count'])
+        source /= inner_iterations
     return source
 
 
@@ -72,25 +46,12 @@ def signal_block_post(builder, source, state):
 
 
 def feedback_loop(builder, source, state):
-    source = synthdeftools.UGenArray((source[-1],) + source[:-1])
-    source *= ugentools.LFNoise1.kr(frequency=0.05).squared().s_curve()
-    source *= -0.9
-    source = ugentools.HPF.ar(
-        source=source,
-        frequency=250,
-        )
-    source = ugentools.DelayC.ar(
-        source=source,
-        delay_time=ugentools.LFNoise1.kr(
-            frequency=0.05,
-            ).scale(-1, 1, 0.1, 0.2),
-        maximum_delay_time=0.2,
-        )
-    return source
+    return source * ugentools.DC.kr(-12).db_to_amplitude() * -1
 
 
 factory = synthdeftools.SynthDefFactory(
     channel_count=2,
+    frequency=1,
     gain=0,
     )
 factory = factory.with_input()

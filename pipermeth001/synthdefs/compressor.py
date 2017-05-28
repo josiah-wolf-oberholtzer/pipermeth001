@@ -57,7 +57,7 @@ factory = synthdeftools.SynthDefFactory(
     channel_count=2,
     pregain=0,
     postgain=0,
-    limiter_lookahead=0.1,
+    limiter_lookahead=0.01,
     )
 factory = factory.with_initial_state(
     frequencies=(150, 300, 600, 1200, 2400, 4800, 9600),
@@ -65,7 +65,7 @@ factory = factory.with_initial_state(
 factory = factory.with_parameter_block(parameter_block)
 factory = factory.with_input()
 factory = factory.with_signal_block(signal_block)
-factory = factory.with_output()
+factory = factory.with_output(replacing=True)
 
 multiband_compressor = factory.build(name='compressor')
 

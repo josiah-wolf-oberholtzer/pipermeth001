@@ -55,21 +55,22 @@ def signal_block(builder, source, state):
         if i % 2:
             source[i] *= -1
     if state['channel_count'] > 1:
-        position = ugentools.LFNoise1.kr(
+        azimuth = ugentools.LFNoise1.kr(
             frequency=[0.05] * iterations,
             )
-        if state['channel_count'] > 2:
-            source = ugentools.PanAz.ar(
-                channel_count=state['channel_count'],
-                position=position,
-                source=source,
-                )
-        else:
-            source = ugentools.Pan2.ar(
-                position=position ** 0.25,
-                source=source,
-                )
-    source = ugentools.Mix.multichannel(source, state['channel_count'])
+        source = ugentools.PanB2.ar(
+            source=source,
+            azimuth=azimuth,
+            )
+        source = ugentools.Mix.multichannel(source, 3)
+        source = ugentools.DecodeB2.ar(
+            channel_count=state['channel_count'],
+            w=source[0],
+            x=source[1],
+            y=source[2],
+            )
+    if len(source) != state['channel_count']:
+        source = ugentools.Mix.multichannel(source, state['channel_count'])
     source *= builder['gain'].db_to_amplitude()
     source *= state['buffer_window']
     if iterations > 1:

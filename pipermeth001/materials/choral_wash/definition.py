@@ -6,6 +6,32 @@ from pipermeth001 import project_settings, synthdefs
 
 session = Session.from_project_settings(project_settings)
 
+release_time = 15
+
+minutes = 20
+
+layer_count = 4
+
+compressor_parameters = dict(
+    band_1_threshold=-18,
+    band_2_threshold=-15,
+    band_3_threshold=-12,
+    band_4_threshold=-15,
+    band_5_threshold=-18,
+    band_6_threshold=-24,
+    band_7_threshold=-30,
+    band_8_threshold=-36,
+    band_1_slope_above=0.75,
+    band_2_slope_above=0.75,
+    band_3_slope_above=0.75,
+    band_4_slope_above=0.75,
+    band_5_slope_above=0.75,
+    band_6_slope_above=0.75,
+    band_7_slope_above=0.75,
+    band_8_slope_above=0.75,
+    limiter_lookahead=0.5,
+    )
+
 ### BUFFERS ###
 
 says = []
@@ -38,13 +64,13 @@ warp_buffer_player_pattern = patterntools.Pbind(
     delta=patterntools.Pwhite(0, 30),
     duration=0,
     direction=patterntools.Prand([-1, 1], repetitions=None),
-    gain=patterntools.Pwhite(-24, -12),
-    overlaps=patterntools.Prand(
-        [1, 2, 4, 8, 8, 16, 16, 16, 32, 32, 32] * 4,
-        repetitions=None),
+    gain=patterntools.Pwhite(-12, 0),
+    overlaps=patterntools.Prand([16, 32] * 100, None),
+    #overlaps=patterntools.Prand(
+    #    [1, 2, 4, 8, 8, 16, 16, 16, 32, 32, 32] * 4, None,
+    #    )
     rate=patterntools.Pwhite(4, 128),
-    #transpose=patterntools.Pwhite(-12.0, 12.0),
-    transpose=patterntools.Pwhite(0.0, 24.0),
+    transpose=patterntools.Pwhite(-12.0, 12.0),
     )
 
 ### FX PATTERN BASE ###
@@ -71,8 +97,8 @@ bpf_sweep_pattern = patterntools.Pbindf(
     synthdef=synthdefs.nrt_bpf_sweep,
     delta=patterntools.Pwhite(30, 90),
     duration=patterntools.Pwhite(30, 60),
-    gain=-6,
-    level=patterntools.Pwhite(0.5, 1.0),
+    gain=3,
+    level=patterntools.Pwhite(0., 0.5),
     start_frequency=patterntools.Pwhite(10000, 20000),
     stop_frequency=patterntools.Pwhite(100, 5000),
     )
@@ -81,7 +107,9 @@ bpf_sweep_pattern = patterntools.Pbindf(
 
 chorus_pattern = patterntools.Pbindf(
     fx_pattern,
-    synthdef=synthdefs.nrt_chorus,
+    synthdef=synthdefs.nrt_chorus_factory.build(
+        name='chorus8', iterations=8),
+    frequency=patterntools.Pwhite() * 2,
     gain=3,
     )
 
@@ -90,9 +118,9 @@ chorus_pattern = patterntools.Pbindf(
 freeverb_pattern = patterntools.Pbindf(
     fx_pattern,
     synthdef=synthdefs.nrt_freeverb,
-    damping=patterntools.Pwhite(),
-    gain=6,
-    room_size=patterntools.Pwhite(),
+    damping=patterntools.Pwhite() ** 0.25,
+    gain=3,
+    room_size=patterntools.Pwhite() ** 0.25,
     )
 
 ### FREQSHIFT ###
@@ -109,7 +137,7 @@ freqshift_pattern = patterntools.Pbindf(
 greyout_pattern = patterntools.Pbindf(
     fx_pattern,
     synthdef=synthdefs.nrt_greyout,
-    gain=-6,
+    gain=0,
     delta=patterntools.Pwhite(45, 90),
     )
 
@@ -120,8 +148,8 @@ lpf_dip_pattern = patterntools.Pbindf(
     synthdef=synthdefs.nrt_lpf_dip,
     delta=patterntools.Pwhite(30, 90),
     duration=patterntools.Pwhite(30, 60),
-    gain=0,
-    level=patterntools.Pwhite(0.5, 1.0),
+    gain=3,
+    level=patterntools.Pwhite(0., 0.5),
     frequency=patterntools.Pwhite(1000, 10000),
     )
 
@@ -139,74 +167,36 @@ pitchshift_pattern = patterntools.Pbindf(
 
 ### MAIN PATTERN ###
 
-release_time = 15
-
-compressor_parameters = dict(
-    band_1_threshold=-12,
-    band_2_threshold=-12,
-    band_3_threshold=-12,
-    band_4_threshold=-15,
-    band_5_threshold=-18,
-    band_6_threshold=-24,
-    band_7_threshold=-30,
-    band_8_threshold=-36,
-    limiter_lookahead=5,
-    )
-
-source_pattern = patterntools.Ppar(
-    [
-        warp_buffer_player_pattern,
-        ],
-    )
-source_pattern = source_pattern.with_group(
-    release_time=release_time,
-    )
+source_pattern = patterntools.Ppar([warp_buffer_player_pattern])
+source_pattern = source_pattern.with_group(release_time=release_time)
 source_pattern = source_pattern.with_effect(
     synthdef=synthdefs.multiband_compressor,
     release_time=release_time,
-    band_1_slope_above=0.5,
-    band_2_slope_above=0.5,
-    band_3_slope_above=0.5,
-    band_4_slope_above=0.5,
-    band_5_slope_above=0.5,
-    band_6_slope_above=0.5,
-    band_7_slope_above=0.5,
-    band_8_slope_above=0.5,
+    pregain=12,
     **compressor_parameters
     )
-source_pattern = source_pattern.with_bus(release_time=release_time)
 
-effect_pattern = patterntools.Ppar(
-    [
-        allpass_pattern,
-        chorus_pattern,
-        freeverb_pattern,
-        freqshift_pattern,
-        greyout_pattern,
-        pitchshift_pattern,
-        bpf_sweep_pattern,
-        lpf_dip_pattern,
-        ],
-    )
-effect_pattern = effect_pattern.with_group(
-    release_time=release_time,
-    )
+### EFFECT PATTERN ###
+
+effect_pattern = patterntools.Ppar([
+    allpass_pattern,
+    chorus_pattern,
+    freeverb_pattern,
+    freqshift_pattern,
+    greyout_pattern,
+    pitchshift_pattern,
+    bpf_sweep_pattern,
+    lpf_dip_pattern,
+    ])
+effect_pattern = effect_pattern.with_group(release_time=release_time)
 effect_pattern = effect_pattern.with_effect(
     synthdef=synthdefs.multiband_compressor,
     release_time=release_time,
-    band_1_slope_above=0.75,
-    band_2_slope_above=0.75,
-    band_3_slope_above=0.75,
-    band_4_slope_above=0.75,
-    band_5_slope_above=0.75,
-    band_6_slope_above=0.75,
-    band_7_slope_above=0.75,
-    band_8_slope_above=0.75,
+    pregain=6,
     **compressor_parameters
     )
-effect_pattern = effect_pattern.with_bus(
-    release_time=release_time,
-    )
+
+### GLOBAL PATTERN ###
 
 global_pattern = patterntools.Pgpar(
     [
@@ -214,13 +204,12 @@ global_pattern = patterntools.Pgpar(
         effect_pattern,
         ],
     release_time=release_time,
-    ).with_bus(release_time=release_time)
+    )
+global_pattern = global_pattern.with_bus(release_time=release_time)
 
 ### RENDER ###
 
-minutes = 10
-iterations = 5
-for i in range(iterations):
+for i in range(layer_count):
     with session.at(i * 10):
         session.inscribe(global_pattern, duration=60 * minutes, seed=i)
 
@@ -229,20 +218,13 @@ with session.at(0):
         synthdef=synthdefs.multiband_compressor,
         add_action='ADD_TO_TAIL',
         duration=session.duration + release_time,
-        pregain=-9,
-        band_1_slope_above=0.75,
-        band_2_slope_above=0.75,
-        band_3_slope_above=0.75,
-        band_4_slope_above=0.75,
-        band_5_slope_above=0.75,
-        band_6_slope_above=0.75,
-        band_7_slope_above=0.75,
-        band_8_slope_above=0.75,
+        pregain=-6,
         **compressor_parameters
         )
-    session.set_rand_seed()
 
-friends = session
+session.set_rand_seed(offset=0)
+
+choral_wash = session
 
 #import pprint
 #pprint.pprint(session.to_lists(), width=200)
@@ -265,4 +247,4 @@ Something funny is happening in NRT compilation.
 
 """
 
-__all__ = ['friends']
+__all__ = ['choral_wash']
