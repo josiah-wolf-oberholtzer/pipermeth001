@@ -5,16 +5,23 @@ from supriya import ugentools
 
 def parameter_block(builder, state):
     frequencies = state['frequencies']
+    pregain = state.get('default_pregain') or 0
+    clamp_time = state.get('default_clamp_time') or 0.01
+    relax_time = state.get('default_relax_time') or 0.1
+    threshold = state.get('default_threshold') or -6.0
+    slope_above = state.get('default_slope_above') or 0.5
+    slope_below = state.get('default_slope_below') or 1.0
+    postgain = state.get('default_postgain') or 0
     band_count = len(frequencies) + 1
     for i in range(band_count):
         band_name = 'band_{}_'.format(i + 1)
-        builder._add_parameter(band_name + 'pregain', 0, 'CONTROL')
-        builder._add_parameter(band_name + 'clamp_time', 0.01, 'CONTROL')
-        builder._add_parameter(band_name + 'relax_time', 0.1, 'CONTROL')
-        builder._add_parameter(band_name + 'threshold', -6, 'CONTROL')
-        builder._add_parameter(band_name + 'slope_above', 0.5, 'CONTROL')
-        builder._add_parameter(band_name + 'slope_below', 1.0, 'CONTROL')
-        builder._add_parameter(band_name + 'postgain', 0, 'CONTROL')
+        builder._add_parameter(band_name + 'pregain', pregain, 'CONTROL')
+        builder._add_parameter(band_name + 'clamp_time', clamp_time, 'CONTROL')
+        builder._add_parameter(band_name + 'relax_time', relax_time, 'CONTROL')
+        builder._add_parameter(band_name + 'threshold', threshold, 'CONTROL')
+        builder._add_parameter(band_name + 'slope_above', slope_above, 'CONTROL')
+        builder._add_parameter(band_name + 'slope_below', slope_below, 'CONTROL')
+        builder._add_parameter(band_name + 'postgain', postgain, 'CONTROL')
 
 
 def signal_block(builder, source, state):
@@ -41,6 +48,7 @@ def signal_block(builder, source, state):
             threshold=builder[band_name + 'threshold'].db_to_amplitude(),
             )
         band *= builder[band_name + 'postgain'].db_to_amplitude()
+        band = band.tanh()  # hmm!
         compressors.extend(band)
     assert len(compressors) == state['channel_count'] * (len(frequencies) + 1)
     source = ugentools.Mix.multichannel(compressors, state['channel_count'])
@@ -67,8 +75,10 @@ factory = factory.with_input()
 factory = factory.with_signal_block(signal_block)
 factory = factory.with_output(replacing=True)
 
+multiband_compressor_factory = factory
 multiband_compressor = factory.build(name='compressor')
 
 __all__ = (
     'multiband_compressor',
+    'multiband_compressor_factory',
     )

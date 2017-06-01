@@ -27,12 +27,12 @@ class SessionFactory(supriya.nonrealtimetools.SessionFactory):
     ### GLOBALS ###
 
     layer_count = 2
-    minutes = 3
+    minutes = 2
     release_time = 15
 
     ### SESSION ###
 
-    def __session__(self):
+    def __session__(self, initial_seed=0):
         self.buffers = []
         session = supriya.Session(
             input_bus_channel_count=self.input_bus_channel_count,
@@ -42,7 +42,7 @@ class SessionFactory(supriya.nonrealtimetools.SessionFactory):
             for say in libretto_x:
                 buffer_ = session.add_buffer(channel_count=1, file_path=say)
                 self.buffers.append(buffer_)
-        for i in range(self.layer_count):
+        for i in range(initial_seed, self.layer_count + initial_seed):
             with session.at(i * 10):
                 session.inscribe(
                     self.global_pattern,
