@@ -3,23 +3,31 @@ from supriya import ugentools
 
 
 def signal_block_pre(builder, source, state):
-    source = ugentools.Limiter.ar(
-        duration=ugentools.Rand.ir(0.005, 0.015),
-        source=source,
-        )
+    #source = ugentools.Limiter.ar(
+    #    duration=ugentools.Rand.ir(0.005, 0.015),
+    #    source=source,
+    #    )
     return source
 
 
 def signal_block(builder, source, state):
     frequencies, amplitudes, decay_times = [], [], []
+    nyquist = ugentools.SampleRate.ir() / 2
     for _ in range(state.get('iterations') or 4):
+
         frequency = ugentools.ExpRand.ir(
             minimum=builder['frequency_minimum'],
             maximum=builder['frequency_maximum'],
             )
+
+        coefficient = (nyquist - frequency) / nyquist
+        amplitude = ugentools.ExpRand.ir() * (coefficient ** 2)
+        decay_time = ugentools.Rand.ir(1, 2)
+
         frequencies.append(frequency)
-        amplitudes.append(ugentools.ExpRand.ir())
-        decay_times.append(ugentools.Rand.ir(1, 2))
+        amplitudes.append(amplitude)
+        decay_times.append(decay_time)
+
     specifications = [frequencies, amplitudes, decay_times]
     source = ugentools.Klank.ar(
         source=source,

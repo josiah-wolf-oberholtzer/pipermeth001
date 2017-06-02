@@ -6,14 +6,14 @@ def signal_block(builder, source, state):
     line = state['line']
     lfo_frequency = line.scale(
         0, 1,
-        ugentools.ExpRand.ir(1, 10),
-        ugentools.ExpRand.ir(1, 10),
+        ugentools.ExpRand.ir(1, 20),
+        ugentools.ExpRand.ir(1, 20),
         exponential=True,
         )
     lfo = ugentools.LFPar.kr(frequency=lfo_frequency)
     frequency = lfo.scale(
         -1, 1,
-        ugentools.Rand.ir(5000, ugentools.SampleRate.ir() * 0.5),
+        ugentools.Rand.ir(10000, ugentools.SampleRate.ir() * 0.5),
         ugentools.SampleRate.ir() * 0.5,
         )
     source = ugentools.LPF.ar(

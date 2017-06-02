@@ -5,10 +5,10 @@ from supriya import ugentools
 
 def signal_block_pre(builder, source, state):
     source *= ugentools.Line.kr(duration=0.1)  # protect against clicks
-    source = ugentools.Limiter.ar(
-        duration=ugentools.Rand.ir(0.005, 0.015),
-        source=source,
-        )
+    #source = ugentools.Limiter.ar(
+    #    duration=ugentools.Rand.ir(0.005, 0.015),
+    #    source=source,
+    #    )
     return source
 
 
@@ -18,6 +18,11 @@ def signal_block(builder, source, state):
     channel_count = state['channel_count']
     frequency = [builder['frequency']] * channel_count
     assert len(frequency) == channel_count
+    lowpassed = ugentools.LPF.ar(
+        source=source,
+        frequency=1000,
+        )
+    source -= lowpassed
     for _ in range(stage_iterations):
         all_delays = []
         delay = source
@@ -32,6 +37,7 @@ def signal_block(builder, source, state):
             all_delays.extend(delay)
         source = ugentools.Mix.multichannel(all_delays, state['channel_count'])
         source /= inner_iterations
+    source += lowpassed
     return source
 
 

@@ -29,26 +29,34 @@ def signal_block(builder, source, state):
     bands = []
     frequencies = state['frequencies']
     for frequency in frequencies:
-        band = ugentools.LPF.ar(
+        band = ugentools.BLowPass.ar(
             source=source,
-            frequency=frequency,)
+            frequency=frequency,
+            reciprocal_of_q=4,
+            )
         bands.append(band)
         source -= band
     bands.append(source)
     compressors = []
     for i, band in enumerate(bands):
         band_name = 'band_{}_'.format(i + 1)
+        threshold = builder[band_name + 'threshold']
         band *= builder[band_name + 'pregain'].db_to_amplitude()
+        band = band.tanh()  # hmm!
         band = ugentools.CompanderD.ar(
             clamp_time=builder[band_name + 'clamp_time'],
             relax_time=builder[band_name + 'relax_time'],
             slope_above=builder[band_name + 'slope_above'],
             slope_below=builder[band_name + 'slope_below'],
             source=band,
-            threshold=builder[band_name + 'threshold'].db_to_amplitude(),
+            threshold=threshold.db_to_amplitude(),
             )
+        band = ugentools.Limiter.ar(
+            source=band,
+            duration=0.1,
+            level=(threshold + 3).db_to_amplitude(),
+            ).softclip()
         band *= builder[band_name + 'postgain'].db_to_amplitude()
-        band = band.tanh()  # hmm!
         compressors.extend(band)
     assert len(compressors) == state['channel_count'] * (len(frequencies) + 1)
     source = ugentools.Mix.multichannel(compressors, state['channel_count'])

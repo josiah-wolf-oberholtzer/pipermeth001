@@ -5,10 +5,10 @@ from supriya import ugentools
 
 def signal_block_pre(builder, source, state):
     source *= ugentools.Line.kr(duration=0.1)  # protect against clicks
-    source = ugentools.Limiter.ar(
-        duration=ugentools.Rand.ir(0.005, 0.015),
-        source=source,
-        )
+    #source = ugentools.Limiter.ar(
+    #    duration=ugentools.Rand.ir(0.005, 0.015),
+    #    source=source,
+    #    )
     return source
 
 
@@ -45,8 +45,11 @@ def signal_block_post(builder, source, state):
 
 
 def feedback_loop(builder, source, state):
-    if len(source) > 1:
-        source = synthdeftools.UGenArray((source[-1],) + source[:-1])
+    #source = synthdeftools.UGenArray((source[-1],) + source[:-1])
+    source = ugentools.HPF.ar(
+        source=source,
+        frequency=1000,
+        )
     source *= ugentools.LFNoise1.kr(frequency=0.05).squared().s_curve()
     source *= -0.99
     return source

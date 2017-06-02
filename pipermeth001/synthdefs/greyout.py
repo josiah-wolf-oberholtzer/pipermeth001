@@ -5,10 +5,10 @@ from supriya import ugentools
 
 def signal_block_pre(builder, source, state):
     source *= ugentools.Line.kr(duration=0.1)  # protect against clicks
-    source = ugentools.Limiter.ar(
-        duration=ugentools.Rand.ir(0.005, 0.015),
-        source=source,
-        )
+    #source = ugentools.Limiter.ar(
+    #    duration=ugentools.Rand.ir(0.005, 0.015),
+    #    source=source,
+    #    )
     return source
 
 
