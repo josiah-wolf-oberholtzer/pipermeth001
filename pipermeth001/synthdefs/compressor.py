@@ -81,11 +81,6 @@ def signal_block(builder, source, state):
             threshold=threshold.db_to_amplitude(),
             )
         band = band.tanh()  # hmm!
-        band = ugentools.Limiter.ar(
-            source=band,
-            duration=0.1,
-            level=(threshold + 6).db_to_amplitude(),
-            )
         band *= builder[band_name + 'postgain'].db_to_amplitude()
         compressors.extend(band)
     assert len(compressors) == state['channel_count'] * (len(frequencies) + 1)
