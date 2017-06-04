@@ -18,7 +18,7 @@ import supriya
 from pipermeth001 import project_settings, synthdefs
 from pipermeth001.materials import (
     libretto_x,
-    compressor_settings,
+    #compressor_settings,
     )
 
 
@@ -26,8 +26,8 @@ class SessionFactory(supriya.nonrealtimetools.SessionFactory):
 
     ### GLOBALS ###
 
-    layer_count = 2
-    minutes = 2
+    layer_count = 3
+    minutes = 20
     release_time = 15
 
     ### SESSION ###
@@ -54,8 +54,8 @@ class SessionFactory(supriya.nonrealtimetools.SessionFactory):
                 synthdef=synthdefs.multiband_compressor,
                 add_action='ADD_TO_TAIL',
                 duration=session.duration + self.release_time,
-                pregain=-6,
-                **compressor_settings
+                pregain=0,
+                #**compressor_settings
                 )
         session.set_rand_seed(offset=0)
         return session
@@ -88,7 +88,7 @@ class SessionFactory(supriya.nonrealtimetools.SessionFactory):
             synthdef=synthdefs.multiband_compressor,
             release_time=self.release_time,
             pregain=12,
-            **compressor_settings
+            #**compressor_settings
             )
         return source_pattern
 
@@ -164,8 +164,8 @@ class SessionFactory(supriya.nonrealtimetools.SessionFactory):
         effect_pattern = effect_pattern.with_effect(
             synthdef=synthdefs.multiband_compressor,
             release_time=self.release_time,
-            pregain=6,
-            **compressor_settings
+            pregain=3,
+            #**compressor_settings
             )
         return effect_pattern
 
